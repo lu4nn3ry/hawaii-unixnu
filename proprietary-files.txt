@@ -1,0 +1,26 @@
+# Files and firmware blobs that must be extracted from the vendor device
+# and are NOT part of this repository (proprietary).
+#
+# Format: <dest-path>  # <source-note>
+
+# Boot images (for header parsing and DTB extraction)
+boot_a.img  # /dev/block/by-name/boot_a (stock, rescue)
+boot_b.img  # /dev/block/by-name/boot_b (Magisk-patched, 9af73f3d...)
+vendor_boot_a.img  # /dev/block/by-name/vendor_boot_a
+vendor_boot_b.img  # /dev/block/by-name/vendor_boot_b
+dtbo_a.img  # /dev/block/by-name/dtbo_a
+dtbo_b.img  # /dev/block/by-name/dtbo_b
+uboot_a.img  # /dev/block/by-name/uboot_a
+uboot_b.img  # /dev/block/by-name/uboot_b
+
+# DTB blobs (extracted from vendor boot.bin)
+boot-dtb.dtb  # appended DTB from boot_a/boot_b header v2
+
+# Vendor kernel Image (for config / module ABI reference)
+kernel.img  # extracted Image from boot partition
+
+# Vendor firmware (Mali-G57 CSF, Wi-Fi, audio DSP, modem)
+mali_csffw.bin  # Mali command-stream firmware (from vendor kernel/modules)
+wcn_fw.bin      # Unisoc WCN Wi-Fi/BT firmware
+audio_dsp.bin   # audio DSP firmware
+modem_fw.bin    # CP / modem firmware

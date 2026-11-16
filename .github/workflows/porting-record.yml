@@ -1,0 +1,17 @@
+name: porting-record
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  porting-record:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check porting record
+        run: |
+          echo "I: porting record check for hawaii device repository"
+          echo "I: no automated checks configured yet (bring-up skeleton)"

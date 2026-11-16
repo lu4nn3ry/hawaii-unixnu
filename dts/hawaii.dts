@@ -1,0 +1,41 @@
+/dts-v1/;
+/include/ "ums9230.dtsi"
+
+/ {
+	model = "Motorola Moto E32 (hawaii, ums9230)";
+	compatible = "motorola,hawaii", "sprd,ums9230";
+
+	memory@80000000 {
+		device_type = "memory";
+		reg = <0 0x80000000 0 0x80000000>;
+	};
+
+	chosen {
+		stdout-path = "/soc/serial@70100000";
+		bootargs = "console=ttyS1,115200n8";
+	};
+
+	reserved-memory {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		ramoops: ramoops@fff80000 {
+			compatible = "ramoops";
+			reg = <0 0xfff80000 0 0x40000>;
+			record-size = <0x8000>;
+			console-size = <0x8000>;
+			pmsg-size = <0x8000>;
+		};
+	};
+
+	soc {
+		sdhci: mmc@71400000 {
+			compatible = "unixnu,sdhci-block", "sprd,sdhc-r11p1";
+			unixnu,adt-name = "sdhci";
+			reg = <0 0x71400000 0 0x1000>;
+			interrupts = <0 10 4>;
+			status = "okay";
+		};
+	};
+};

@@ -1,0 +1,16 @@
+# Shared Unisoc UMS9230 / Tiger T606 SoC support.
+#
+# The SoC repository is embedded at soc/UniXNU-ums9230-common so that CI and
+# local builds are reproducible before a standalone UniXNU-ums9230-common
+# repository is published. Once published, replace the local entry with:
+#
+#   [[source]]
+#   name = "ums9230"
+#   kind = "soc"
+#   git = "https://github.com/<you>/UniXNU-ums9230-common"
+#   commit = "<40-character reviewed commit>"
+
+[[source]]
+name = "ums9230"
+kind = "soc"
+local = "soc/UniXNU-ums9230-common"

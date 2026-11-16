@@ -1,0 +1,109 @@
+schema_version = 2
+
+[board]
+name = "hawaii"
+soc = "UMS9230"
+soc_source = "ums9230"
+os_profile = "ipados-17.7.11-21H461"
+kit = "hawaii"
+description = "Motorola Moto E32 (XT2227-1), Unisoc UMS9230 / Tiger T606"
+
+[components]
+# Minimal first-bring-up set, same shape as UniXNU-eebbk-a2_x2-ums512 (UMS512).
+include = [
+  "ArmDTPlatform",
+  "ArmCpu",
+  "SoftwareAES",
+  "XnuPrelink",
+  "DarwinBoot",
+  "SdhciBlock",
+]
+
+[kernel]
+defconfig = "hawaii_defconfig"
+config_fragments = [
+  "arch:configs/common.config",
+  "soc:configs/ums9230.config",
+  "os:configs/ipados.config",
+]
+# XNU patch series applied in order: arch, soc, device.
+patch_series = [
+  "arch:patches/xnu/series",
+  "soc:patches/xnu/series",
+  "device:patches/xnu/series",
+]
+
+archives = [
+  "build-corecrypto-14.py",
+  "build-corecrypto-14.py --namespace",
+  "component:ArmDTPlatform",
+  "component:ArmCpu",
+  "component:SoftwareAES",
+  "build-software-aes-bindings.py",
+  "build-mockfs-fixture.py",
+  "build-libpthread-kernel.py",
+  "component:SdhciBlock",
+]
+
+[device_tree]
+source = "device:dts/hawaii.dts"
+include_dirs = ["soc:dts"]
+
+[firmware]
+# uefi-hawaii follows the Mu-Silicium repository layout that
+# `./unixnu build firmware --uefi ../uefi-hawaii` and
+# `./unixnu bootimg --uefi ../uefi-hawaii` expect:
+#   BootShim/BootShim.S                 Unisoc cboot trampoline
+#   Resources/Configs/hawaii.toml       [boot_shim] [uefi_fd] [boot_image_kernel] [boot_image]
+#   Resources/Scripts/mkbootimg.py      Android boot image writer (from Mu-Silicium)
+#   Platforms/Unisoc/hawaiiPkg/         DSC/FDF + MemoryMapLib + UniXNU payload DXE
+#   Silicon/Unisoc/UMS9230Pkg/          SoC layer (UART, GIC, timer, DPU/GOP)
+config = "hawaii"
+dsc = "Platforms/Unisoc/hawaiiPkg/hawaii.dsc"
+fd = "Build/hawaiiPkg/{target}_CLANGDWARF/FV/SILICIUM_UEFI.fd"
+packages = [
+  "{uefi}",
+  "{tree}/package",
+  "{tree}/drivers/DarwinBoot",
+  "{edk2}",
+  "{uefi}/Platforms/Unisoc",
+  "{uefi}/Silicon/Unisoc",
+  "{uefi}/Silicon/Silicium",
+]
+
+[firmware.defines]
+DEVICE_MODEL = "hawaii"
+ENABLE_SECUREBOOT = "0"
+
+# Stock boot image parameters (Android header v2, measured from boot_b):
+#   header_version 2, pagesize 2048, kernel_addr 0x8000, ramdisk_addr 0x5400000,
+#   tags_offset 0x100, cmdline console=ttyS1,115200n8 buildvariant=user
+[bootimg.image]
+base = 0
+kernel_offset = 0x8000
+ramdisk_offset = 0x5400000
+tags_offset = 0x100
+pagesize = 2048
+header_version = 2
+
+[payload]
+volume = "UNIXNU"
+size_mib = 192
+loader = "firmware"
+title = "UniXNU"
+dram_size = "0x80000000"
+panic_screen = true
+skip_setup_tool = "scripts/seed-data-skip-setup.py"
+timeout = 3
+
+kernel_args = ["-v", "serial=3"]
+
+[payload.adt]
+chip_id = "0"
+owned_memory_size = "0x10000000"
+root_match_volume_uuid = "REQUIRED_ROOT_VOLUME_UUID"
+cpu_regs = "0,0x100"
+psci_method = "smc"
+packed_data_ramdisk = true
+ipad_identity = true
+unique_chip_id = "required"

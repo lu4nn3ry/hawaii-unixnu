@@ -1,0 +1,125 @@
+schema_version = 1
+
+[device]
+name = "hawaii"
+soc = "UMS9230"
+os_profile = "ipados-17.7.11-21H461"
+summary = "Motorola Moto E32 (XT2227-1), Unisoc UMS9230/T606. Community port; no real-hardware result yet. This record separates what is proven from source (vendor partition dumps, DTS, boot image headers) from what still needs a device."
+
+[[area]]
+id = "configuration"
+status = "skeleton"
+components = ["ArmDTPlatform", "ArmCpu", "SoftwareAES", "XnuPrelink", "DarwinBoot"]
+paths = ["board.toml", "feeds.toml", "configs/**", "dts/**", ".github/**", ".gitignore"]
+inputs = ["Vendor partition dumps (boot_a, boot_b, vendor_boot_a/b, dtbo_a/b, uboot_a/b), motorola-moto-e32-root repo (kernel config, DTB, offsets), UniXNU format-2 device template."]
+configuration = ["board.soc = UMS9230, board.soc_source = ums9230, board.os_profile = ipados-17.7.11-21H461, schema_version = 2.", "config_fragments = arch common + soc:configs/ums9230.config + os:configs/ipados.config; patch_series has the four standard roots.", "The SoC source is selected locally through local.toml ([[source]] kind=soc name=ums9230) until soc/UniXNU-ums9230-common is published."]
+limits = ["The SoC repository has no published commit yet, so feeds.toml keeps local override and builds rely on local.toml.", "The os_profile is a placeholder until an IPSW identity is chosen for the DarwinBoot milestone."]
+next_action = ["Publish soc/UniXNU-ums9230-common, pin its commit, then re-run defconfig/status and record the resolved output."]
+
+[[area]]
+id = "firmware"
+status = "not-started"
+components = ["DarwinBoot"]
+paths = ["proprietary-files.txt", "uefi/**", ".github/workflows/build.yml"]
+inputs = ["Boot chain: BootROM -> FDL -> splloader -> U-Boot + cboot -> boot partition. No UEFI firmware exists for UMS9230; BootShim trampoline must be written from scratch.", "EDK2 stack: microsoft/mu_basecore release/202608, mu_plus, mu_oem_sample, UniXNU/uefi-sheng Silicon/Silicium (as template for Unisoc)."]
+limits = ["No UEFI for UMS9230; BootShim handoff address, FDT in x0, UART baud and framebuffer state are unverified for cboot on UMS9230.", "An empty boot.img ramdisk means the UniXNU menu has no payload entries; a payload FAT (kernel.macho + .adt + unixnu.toml) needs a macOS XNU build."]
+next_action = ["Write BootShim cboot trampoline and EDK2 DSC/FDF for hawaiiPkg; verify FD builds on host."]
+
+[[area]]
+id = "cpu"
+status = "skeleton"
+components = ["ArmDTPlatform", "ArmCpu"]
+paths = ["dts/**", "soc/UniXNU-ums9230-common/dts/**", "soc/UniXNU-ums9230-common/configs/**"]
+inputs = ["Vendor DTB: 6x Cortex-A55 + 2x Cortex-A75, PSCI smc, GICv3, timer PPI 13/14/11/10, 26 MHz (inferred from UMS512/T610 family; verify against vendor boot DTB of hawaii)."]
+limits = ["CPU topology and GIC addresses inferred from UMS512/T610 family; must be re-extracted from the hawaii vendor boot DTB before trusting."]
+next_action = ["Decompile vendor boot_b DTB, extract cpu/gic/timer nodes, write ums9230.dtsi."]
+
+[[area]]
+id = "memory"
+status = "skeleton"
+components = []
+paths = ["dts/**", "proprietary-files.txt", "uefi/**/MemoryMapLib/**"]
+inputs = ["Vendor DTB memory map and reserved-memory (to be extracted from hawaii boot DTB). E32 has 3-4 GiB DRAM variants."]
+limits = ["DRAM size and reserved regions unverified for hawaii."]
+next_action = ["Extract memory and reserved-memory from vendor DTB; write MemoryMapLib reservations."]
+
+[[area]]
+id = "storage"
+status = "not-started"
+components = []
+paths = ["drivers/**", "scripts/*storage*"]
+inputs = ["Stock storage is eMMC/UFS (SDHCI/UFS host). Dynamic partitions in super (system/system_ext/vendor/product, non-A/B per ro.boot.dynamic_partitions=true)."]
+limits = ["eMMC/UFS controller registers, PHY/clock programming and DMA attributes not extracted from vendor kernel."]
+next_action = ["Extract eMMC/UFS host controller programming from vendor kernel sources for ums9230."]
+
+[[area]]
+id = "display"
+status = "not-started"
+components = []
+paths = ["package/*Display*", "uefi/**/Gop*/**"]
+inputs = ["Panel: 720x1600 MIPI DSI. U-Boot logobuffer address unknown for hawaii (UMS512 used 0x9e000000)."]
+limits = ["Panel timing, DPU/DSI registers and framebuffer state at handoff unverified."]
+next_action = ["Read panel timing from vendor kernel dts; confirm framebuffer state on hardware."]
+
+[[area]]
+id = "input"
+status = "not-started"
+components = []
+paths = ["drivers/**", "package/*Touch*"]
+inputs = ["Touch controller unknown for hawaii (to be extracted from vendor DTB)."]
+limits = ["Touch firmware/config blob not extracted."]
+next_action = ["Extract touch node and GPIO/interrupt wiring from vendor DTB."]
+
+[[area]]
+id = "gpu"
+status = "not-started"
+components = []
+paths = ["package/*Gpu*", "scripts/*gpu*"]
+inputs = ["UMS9230 uses a Mali-G57 GPU (Valhall); no Mali/Metal component exists in the UniXNU catalog for this SoC."]
+limits = ["No Mali driver component or firmware path exists yet. The Ken-u/Mali driver is Mali-G610 (RK3588), not G57; registers and firmware differ."]
+next_action = ["Inventory the Mali-G57 model and firmware from the vendor DTB/kernel before selecting or writing a component."]
+
+[[area]]
+id = "network"
+status = "not-started"
+components = []
+paths = []
+inputs = ["Vendor DTB likely has Unisoc combo Wi-Fi/BT (SDIO); no PCIe Wi-Fi expected."]
+limits = ["Wi-Fi firmware and SDIO power sequencing not extracted."]
+next_action = ["Extract WCN model and firmware files from vendor super/vendor partitions."]
+
+[[area]]
+id = "audio"
+status = "not-started"
+components = []
+paths = []
+inputs = ["Vendor DTB likely has audiodsp-mem, audio-mem, sprd audio card."]
+limits = ["DSP firmware and ABI not extracted."]
+next_action = ["Inventory the audio DSP firmware and codec wiring."]
+
+[[area]]
+id = "power"
+status = "not-started"
+components = []
+paths = []
+inputs = ["PMIC likely on SPI; charger and backlight nodes unknown."]
+limits = ["PMIC model and regulator map not extracted."]
+next_action = ["Extract PMIC/charger nodes and regulator names from vendor DTB."]
+
+[[area]]
+id = "packaging"
+status = "skeleton"
+components = ["SoftwareAES", "XnuPrelink"]
+paths = ["configs/**", "patches/**", "package/**", "scripts/**", "board.toml"]
+inputs = ["Vendor boot image header: ANDROID! v2, pagesize 2048, kernel_addr 0x8000, ramdisk_addr 0x5400000, tags_offset 0x100, cmdline console=ttyS1,115200n8 buildvariant=user (inferred from UMS512; verify against hawaii boot_b)."]
+limits = ["Boot image parameters inferred from UMS512/T610 family; must be re-measured from hawaii boot_b before trusting."]
+next_action = ["Parse hawaii boot_b header (as done for UMS512) and fill exact offsets in board.toml [bootimg]."]
+
+[[area]]
+id = "diagnostics"
+status = "skeleton"
+components = []
+paths = ["tools/**", "uefi/**", "soc/**"]
+inputs = ["Serial console likely UART1 0x70100000 115200n8 (UMS512 value; verify for hawaii); ramoops console region for post-mortem logs."]
+limits = ["No hardware log captured yet; UART test point may not be physically accessible."]
+next_action = ["Prepare UART access and a ramoops collection script before the first flash attempt."]

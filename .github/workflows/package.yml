@@ -1,0 +1,17 @@
+name: package
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run device packaging script
+        run: |
+          echo "I: package check for hawaii device repository"
+          echo "I: no packaging artifacts yet (bring-up skeleton)"
