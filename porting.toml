@@ -45,12 +45,12 @@ next_action = ["Extract memory and reserved-memory from vendor DTB; write Memory
 
 [[area]]
 id = "storage"
-status = "not-started"
-components = []
-paths = ["drivers/**", "scripts/*storage*"]
-inputs = ["Stock storage is eMMC/UFS (SDHCI/UFS host). Dynamic partitions in super (system/system_ext/vendor/product, non-A/B per ro.boot.dynamic_partitions=true)."]
-limits = ["eMMC/UFS controller registers, PHY/clock programming and DMA attributes not extracted from vendor kernel."]
-next_action = ["Extract eMMC/UFS host controller programming from vendor kernel sources for ums9230."]
+status = "skeleton"
+components = ["SdhciBlock"]
+paths = ["drivers/**", "scripts/*storage*", "components/SdhciBlock/SdhciBlock.toml"]
+inputs = ["Stock storage is eMMC/UFS (SDHCI/UFS host). Dynamic partitions in super (system/system_ext/vendor/product, non-A/B per ro.boot.dynamic_partitions=true).", "Existing implementation: woshimaniubi8/unixnu-eebbk-a2_x2-ums512 drivers/SdhciBlock (Unisoc UMS512 SDHCR11 SDHCI 0x71400000, 8-bit eMMC, ADMA2) - same Unisoc family as UMS9230/T606."]
+limits = ["eMMC/UFS controller registers, PHY/clock programming and DMA attributes not extracted from vendor kernel for hawaii specifically. SdhciBlock from UMS512 may need register map adjustments for UMS9230."]
+next_action = ["Clone woshimaniubi8/unixnu-eebbk-a2_x2-ums512 drivers/SdhciBlock as reference; extract eMMC/UFS host controller programming from vendor kernel sources for ums9230; verify SDHCI register map matches UMS512."]
 
 [[area]]
 id = "display"
@@ -66,18 +66,18 @@ id = "input"
 status = "not-started"
 components = []
 paths = ["drivers/**", "package/*Touch*"]
-inputs = ["Touch controller unknown for hawaii (to be extracted from vendor DTB)."]
-limits = ["Touch firmware/config blob not extracted."]
-next_action = ["Extract touch node and GPIO/interrupt wiring from vendor DTB."]
+inputs = ["Touch controller unknown for hawaii (to be extracted from vendor DTB).", "No UniXNU touch driver component exists for Goodix gt9xx or Unisoc touch controllers."]
+limits = ["Touch controller model not identified for hawaii. Touch firmware/config blob not extracted."]
+next_action = ["Search UniXNU repos for touch driver (Goodix gt9xx, etc.); extract touch node and GPIO/interrupt wiring from vendor DTB."]
 
 [[area]]
 id = "gpu"
-status = "not-started"
-components = []
-paths = ["package/*Gpu*", "scripts/*gpu*"]
-inputs = ["UMS9230 uses a Mali-G57 GPU (Valhall); no Mali/Metal component exists in the UniXNU catalog for this SoC."]
-limits = ["No Mali driver component or firmware path exists yet. The Ken-u/Mali driver is Mali-G610 (RK3588), not G57; registers and firmware differ."]
-next_action = ["Inventory the Mali-G57 model and firmware from the vendor DTB/kernel before selecting or writing a component."]
+status = "skeleton"
+components = ["MaliG57"]
+paths = ["package/*Gpu*", "scripts/*gpu*", "components/MaliG57/MaliG57.toml"]
+inputs = ["UMS9230 uses a Mali-G57 GPU (Valhall, JM-based, DDK r28p0).", "Existing implementation: Ken-u/Mali (Mali-G610 Valhall CSF kernel driver for UniXNU) - same Valhall architecture, different GPU_ID/product ID (G610=0xa867, G57 different).", "Existing implementation: Ken-u/MaliMetal (Metal frontend for Mali on UniXNU: PanVK + metal2vulkan bridge)."]
+limits = ["No Mali-G57 specific driver component exists. Ken-u/Mali is Mali-G610 (RK3588), not G57; registers, firmware (mali_csffw.bin) and power domain differ.", "GPU_ID for Mali-G57 must be read from vendor DTB/kernel before writing driver."]
+next_action = ["Inventory Mali-G57 model and firmware from vendor DTB/kernel; clone Ken-u/Mali as reference; write Mali-G57 CSF driver with correct registers and firmware path."]
 
 [[area]]
 id = "network"
@@ -85,8 +85,8 @@ status = "not-started"
 components = []
 paths = []
 inputs = ["Vendor DTB likely has Unisoc combo Wi-Fi/BT (SDIO); no PCIe Wi-Fi expected."]
-limits = ["Wi-Fi firmware and SDIO power sequencing not extracted."]
-next_action = ["Extract WCN model and firmware files from vendor super/vendor partitions."]
+limits = ["No UniXNU Wi-Fi component exists for Unisoc WCN. Wi-Fi firmware and SDIO power sequencing not extracted."]
+next_action = ["Search UniXNU repos for WCN/SDIO Wi-Fi driver; extract WCN model and firmware files from vendor super/vendor partitions if none found."]
 
 [[area]]
 id = "audio"

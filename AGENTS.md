@@ -40,13 +40,26 @@ Driver selection rule (follow the UniXNU porting documentation exactly):
    hardware.
 3. Reference implementations to inspect first:
    - `https://github.com/UniXNU/UniXNU-sheng` (SM8550, reference device)
-   - `https://github.com/woshimaniubi8/unixnu-eebbk-a2_x2-ums512` (UMS512/T610, same Unisoc family)
+   - `https://github.com/woshimaniubi8/unixnu-eebbk-a2_x2-ums512` (UMS512/T610, same Unisoc family - HAS SdhciBlock storage driver)
    - `https://github.com/Ken-u/UniXNU-rk3588-common` (Mali-G610 Valhall - closest to Mali-G57)
+   - `https://github.com/Ken-u/Mali` (Mali-G610 CSF kernel driver for UniXNU)
+   - `https://github.com/Ken-u/MaliMetal` (Metal frontend for Mali on UniXNU)
    - `https://github.com/Lux12138/unixnu-nabu` (Xiaomi Pad 5)
    - `https://github.com/JohnLeeeeeee678/UniXNU-raphael` (iOS 16.7.16 on SM8150)
 4. Only write new code when no open-source implementation exists for the
    hardware. Record the source, revision and why existing components do not
    apply in `porting.toml`.
+
+Research results (2026-11-16):
+
+| Component | Existing implementation | Can adapt to T606/UMS9230? | Notes |
+|-----------|------------------------|---------------------------|-------|
+| Storage (SDHCI/eMMC) | `woshimaniubi8/unixnu-eebbk-a2_x2-ums512` `drivers/SdhciBlock` | YES - same Unisoc SDHCR11 at 0x71400000 | UMS512/T610 same family as UMS9230/T606 |
+| GPU (Mali-G57 Valhall) | `Ken-u/Mali` (Mali-G610 CSF) | PARTIAL - same Valhall arch, different GPU_ID/registers | G610 product 7, G57 different product ID |
+| GPU Metal frontend | `Ken-u/MaliMetal` | PARTIAL - same Valhall arch | PanVK + metal2vulkan bridge |
+| Display (GOP/framebuffer) | `woshimaniubi8/unixnu-eebbk-a2_x2-ums512` BootShim.S | PARTIAL - DPU/DSI at 0x20300000/0x20400000 | Same Unisoc display block |
+| Wi-Fi (WCN SDIO) | None found in UniXNU repos | NO - no open-source implementation | Needs new driver |
+| Touch (Goodix gt9xx) | None found in UniXNU repos | NO - no open-source implementation | Needs new driver |
 
 Report commands, results, required local inputs, and hardware checkpoints.
 Write concise English describing current behavior.
