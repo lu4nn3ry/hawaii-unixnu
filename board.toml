@@ -16,10 +16,6 @@ include = [
   "SoftwareAES",
   "XnuPrelink",
   "DarwinBoot",
-  "SdhciBlock",
-  "MaliG57",
-  "WcnWifi",
-  "GoodixTouch",
 ]
 
 [kernel]
@@ -42,10 +38,6 @@ archives = [
   "component:ArmDTPlatform",
   "component:ArmCpu",
   "component:SoftwareAES",
-  "component:SdhciBlock",
-  "component:MaliG57",
-  "component:WcnWifi",
-  "component:GoodixTouch",
   "build-software-aes-bindings.py",
   "build-mockfs-fixture.py",
   "build-libpthread-kernel.py",
