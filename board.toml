@@ -16,7 +16,6 @@ include = [
   "SoftwareAES",
   "XnuPrelink",
   "DarwinBoot",
-  "SdhciBlock",
 ]
 
 [kernel]
@@ -39,7 +38,6 @@ archives = [
   "component:ArmDTPlatform",
   "component:ArmCpu",
   "component:SoftwareAES",
-  "component:SdhciBlock",
   "build-software-aes-bindings.py",
   "build-mockfs-fixture.py",
   "build-libpthread-kernel.py",
