@@ -1,0 +1,19 @@
+schema_version = 1
+
+[[component]]
+id = "GoodixTouch"
+kind = "driver"
+function = "Goodix GT9xx touch input driver for XNU"
+scope = "input"
+repository = "https://github.com/lu4nn3ry/hawaii-unixnu"
+revision = "main"
+path = "drivers/GoodixTouch"
+hardware = ["Goodix gt9xx", "I2C 0x14"]
+os_abi = ["ipados-17.7.11-21H461"]
+board_dependencies = ["I2C controller", "interrupt GPIO"]
+dependencies = []
+source_files = ["GoodixTouch.cpp"]
+runtime_identifiers = ["GoodixTouch.cpp", "org.blu-sharky.GoodixTouch", "GoodixTouch"]
+build_stage = "kernel"
+build = ["build-arm-driver.py", "GoodixTouch"]
+outputs = ["build/goodixtouch/libGoodixTouch.a"]

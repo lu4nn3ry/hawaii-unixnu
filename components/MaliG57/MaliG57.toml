@@ -1,0 +1,19 @@
+schema_version = 1
+
+[[component]]
+id = "MaliG57"
+kind = "driver"
+function = "Mali-G57 (Valhall) kernel GPU driver for XNU"
+scope = "gpu"
+repository = "https://github.com/lu4nn3ry/hawaii-unixnu"
+revision = "main"
+path = "drivers/MaliG57"
+hardware = ["Mali-G57", "Valhall", "Unisoc UMS9230"]
+os_abi = ["ipados-17.7.11-21H461"]
+board_dependencies = ["Mali-G57 CSF firmware", "GPU power domain", "clock gates"]
+dependencies = []
+source_files = ["MaliG57.cpp"]
+runtime_identifiers = ["MaliG57.cpp", "org.blu-sharky.MaliG57", "MaliG57"]
+build_stage = "kernel"
+build = ["build-arm-driver.py", "MaliG57"]
+outputs = ["build/malig57/libMaliG57.a"]
