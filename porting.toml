@@ -48,9 +48,9 @@ id = "storage"
 status = "skeleton"
 components = ["SdhciBlock"]
 paths = ["drivers/**", "scripts/*storage*", "components/SdhciBlock/SdhciBlock.toml"]
-inputs = ["Stock storage is eMMC/UFS (SDHCI/UFS host). Dynamic partitions in super (system/system_ext/vendor/product, non-A/B per ro.boot.dynamic_partitions=true).", "Existing implementation: woshimaniubi8/unixnu-eebbk-a2_x2-ums512 drivers/SdhciBlock (Unisoc UMS512 SDHCR11 SDHCI 0x71400000, 8-bit eMMC, ADMA2) - same Unisoc family as UMS9230/T606."]
+inputs = ["Stock storage is eMMC/UFS (SDHCI/UFS host). Dynamic partitions in super (system/system_ext/vendor/product, non-A/B per ro.boot.dynamic_partitions=true).", "Existing implementation: woshimaniubi8/unixnu-eebbk-a2_x2-ums512 drivers/SdhciBlock (Unisoc UMS512 SDHCR11 SDHCI 0x71400000, 8-bit eMMC, ADMA2) - same Unisoc family as UMS9230/T606.", "Driver implemented in drivers/SdhciBlock/NativeSdhciBlock.cpp based on eebbk-ums512 reference."]
 limits = ["eMMC/UFS controller registers, PHY/clock programming and DMA attributes not extracted from vendor kernel for hawaii specifically. SdhciBlock from UMS512 may need register map adjustments for UMS9230."]
-next_action = ["Clone woshimaniubi8/unixnu-eebbk-a2_x2-ums512 drivers/SdhciBlock as reference; extract eMMC/UFS host controller programming from vendor kernel sources for ums9230; verify SDHCI register map matches UMS512."]
+next_action = ["Extract eMMC/UFS host controller programming from vendor kernel sources for ums9230; verify SDHCI register map matches UMS512; test on hardware."]
 
 [[area]]
 id = "display"
@@ -81,12 +81,12 @@ next_action = ["Inventory Mali-G57 model and firmware from vendor DTB/kernel; cl
 
 [[area]]
 id = "network"
-status = "not-started"
-components = []
-paths = []
-inputs = ["Vendor DTB likely has Unisoc combo Wi-Fi/BT (SDIO); no PCIe Wi-Fi expected."]
-limits = ["No UniXNU Wi-Fi component exists for Unisoc WCN. Wi-Fi firmware and SDIO power sequencing not extracted."]
-next_action = ["Search UniXNU repos for WCN/SDIO Wi-Fi driver; extract WCN model and firmware files from vendor super/vendor partitions if none found."]
+status = "skeleton"
+components = ["WcnWifi"]
+paths = ["drivers/**", "scripts/*wifi*"]
+inputs = ["Vendor DTB likely has Unisoc combo Wi-Fi/BT (SDIO); no PCIe Wi-Fi expected.", "Existing implementation: linux/drivers/net/wireless/unisoc/ (kernel mainline, SC23xx series) - same Unisoc family as UMS9230/T606.", "Driver implemented in drivers/WcnWifi/NativeWcnWifi.cpp based on linux mainline reference."]
+limits = ["No UniXNU Wi-Fi component exists for Unisoc WCN in official catalog. Wi-Fi firmware and SDIO power sequencing not extracted from vendor partitions."]
+next_action = ["Extract WCN model and firmware files from vendor super/vendor partitions; test Wi-Fi driver on hardware."]
 
 [[area]]
 id = "audio"
