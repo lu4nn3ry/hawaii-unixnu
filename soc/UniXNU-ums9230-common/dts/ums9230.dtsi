@@ -1,0 +1,124 @@
+/*
+ * Unisoc UMS9230 / Tiger T606 (qogirl6) shared device tree include.
+ *
+ * Sources of every value in this file:
+ *   - vendor boot_b appended DTB (to be decompiled from /dev/block/by-name/boot_b)
+ *   - hxzbaka/twrp_device_eebbk_ums512_1h190-A2 (UMS512/T610 family reference)
+ *   - motorola-moto-e32-root kernel source tree
+ *
+ * Only the nodes UniXNU needs to build the ADT are described here.  The board
+ * DTS includes this file and adds DRAM, reserved-memory and board peripherals.
+ */
+
+/dts-v1/;
+
+/ {
+	compatible = "sprd,ums9230";
+	#address-cells = <2>;
+	#size-cells = <2>;
+	interrupt-parent = <&gic>;
+
+	cpus {
+		#address-cells = <2>;
+		#size-cells = <0>;
+		timebase-frequency = <26000000>;
+
+		cpu0: cpu@0 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a55";
+			reg = <0 0x0>;
+			enable-method = "psci";
+			unixnu,cluster-type = "E";
+		};
+		cpu1: cpu@100 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a55";
+			reg = <0 0x100>;
+			enable-method = "psci";
+			unixnu,cluster-type = "E";
+		};
+		cpu2: cpu@200 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a55";
+			reg = <0 0x200>;
+			enable-method = "psci";
+			unixnu,cluster-type = "E";
+		};
+		cpu3: cpu@300 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a55";
+			reg = <0 0x300>;
+			enable-method = "psci";
+			unixnu,cluster-type = "E";
+		};
+		cpu4: cpu@400 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a55";
+			reg = <0 0x400>;
+			enable-method = "psci";
+			unixnu,cluster-type = "E";
+		};
+		cpu5: cpu@500 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a55";
+			reg = <0 0x500>;
+			enable-method = "psci";
+			unixnu,cluster-type = "E";
+		};
+		cpu6: cpu@600 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a75";
+			reg = <0 0x600>;
+			enable-method = "psci";
+			unixnu,cluster-type = "P";
+		};
+		cpu7: cpu@700 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a75";
+			reg = <0 0x700>;
+			enable-method = "psci";
+			unixnu,cluster-type = "P";
+		};
+	};
+
+	psci {
+		compatible = "arm,psci-1.0", "arm,psci-0.2";
+		method = "smc";
+	};
+
+	soc {
+		compatible = "simple-bus";
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		gic: interrupt-controller@12000000 {
+			compatible = "arm,gic-v3";
+			unixnu,adt-name = "intc";
+			reg = <0 0x12000000 0 0x20000>,
+			      <0 0x12040000 0 0x100000>;
+			AAPL,phandle = <0x1>;
+			#interrupt-cells = <3>;
+			#address-cells = <0>;
+			interrupt-controller;
+			redistributor-stride = <0 0x20000>;
+			#redistributor-regions = <1>;
+		};
+
+		timer {
+			compatible = "arm,armv8-timer";
+			unixnu,adt-name = "timer";
+			interrupts = <1 13 4>, <1 14 4>, <1 11 4>, <1 10 4>;
+			clock-frequency = <26000000>;
+		};
+
+		uart1: serial@70100000 {
+			compatible = "sprd,sc9836-uart";
+			unixnu,adt-name = "uart0";
+			reg = <0 0x70100000 0 0x100>;
+			interrupts = <0 3 4>;
+			current-speed = <115200>;
+			status = "okay";
+		};
+	};
+};

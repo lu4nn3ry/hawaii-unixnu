@@ -16,7 +16,6 @@ include = [
   "SoftwareAES",
   "XnuPrelink",
   "DarwinBoot",
-  "SdhciBlock",
 ]
 
 [kernel]
@@ -42,7 +41,6 @@ archives = [
   "build-software-aes-bindings.py",
   "build-mockfs-fixture.py",
   "build-libpthread-kernel.py",
-  "component:SdhciBlock",
 ]
 
 [device_tree]
@@ -50,14 +48,6 @@ source = "device:dts/hawaii.dts"
 include_dirs = ["soc:dts"]
 
 [firmware]
-# uefi-hawaii follows the Mu-Silicium repository layout that
-# `./unixnu build firmware --uefi ../uefi-hawaii` and
-# `./unixnu bootimg --uefi ../uefi-hawaii` expect:
-#   BootShim/BootShim.S                 Unisoc cboot trampoline
-#   Resources/Configs/hawaii.toml       [boot_shim] [uefi_fd] [boot_image_kernel] [boot_image]
-#   Resources/Scripts/mkbootimg.py      Android boot image writer (from Mu-Silicium)
-#   Platforms/Unisoc/hawaiiPkg/         DSC/FDF + MemoryMapLib + UniXNU payload DXE
-#   Silicon/Unisoc/UMS9230Pkg/          SoC layer (UART, GIC, timer, DPU/GOP)
 config = "hawaii"
 dsc = "Platforms/Unisoc/hawaiiPkg/hawaii.dsc"
 fd = "Build/hawaiiPkg/{target}_CLANGDWARF/FV/SILICIUM_UEFI.fd"

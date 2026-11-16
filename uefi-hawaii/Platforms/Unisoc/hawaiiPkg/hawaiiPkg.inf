@@ -1,0 +1,26 @@
+# hawaiiPkg.inf - Platform package for Moto E32 (hawaii)
+#
+# Follows Mu-Silicium Platforms layout:
+#   https://unixnu.com/porting/uefi-firmware#mu-silicium-layout
+
+[Defines]
+  INF_NAME            =  hawaiiPkg
+  INF_GUID            =  00000000-0000-0000-0000-000000000003
+  INF_VERSION         =  0.1
+  BASE_NAME           =  hawaiiPkg
+  FILE_GUID           =  00000002-0000-0000-0000-000000000004
+  PACKAGE_TYPE        =  INF
+  ARCHITECTURE        =  AARCH64
+  CLASS               =  PEIM
+  DEPEX               =  0x00000001   /* Dxe */
+  DEPEX_FILE_TYPE     =  SECTION_FIXED
+
+[Sources]
+  NULL
+
+[Packages]
+  MdePkg/MdePkg.dec
+
+[LibraryClasses]
+
+[BuildOptions]

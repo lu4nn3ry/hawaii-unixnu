@@ -30,5 +30,23 @@ Rules specific to this repository:
 - `tools/board/` is host-side tooling shared by boards. Keep any board's USB ids, load addresses, boot flow, and
   payload out of it, and run `python3 tools/board/selftest.py` after editing it.
 
+Driver selection rule (follow the UniXNU porting documentation exactly):
+
+1. Before implementing any driver, search ALL UniXNU device repositories for
+   the same hardware component (same SoC family, same controller, same
+   register map).
+2. Identify the open-source implementation and clone it - do not create a new
+   driver from scratch if an existing open-source component covers the same
+   hardware.
+3. Reference implementations to inspect first:
+   - `https://github.com/UniXNU/UniXNU-sheng` (SM8550, reference device)
+   - `https://github.com/woshimaniubi8/unixnu-eebbk-a2_x2-ums512` (UMS512/T610, same Unisoc family)
+   - `https://github.com/Ken-u/UniXNU-rk3588-common` (Mali-G610 Valhall - closest to Mali-G57)
+   - `https://github.com/Lux12138/unixnu-nabu` (Xiaomi Pad 5)
+   - `https://github.com/JohnLeeeeeee678/UniXNU-raphael` (iOS 16.7.16 on SM8150)
+4. Only write new code when no open-source implementation exists for the
+   hardware. Record the source, revision and why existing components do not
+   apply in `porting.toml`.
+
 Report commands, results, required local inputs, and hardware checkpoints.
 Write concise English describing current behavior.

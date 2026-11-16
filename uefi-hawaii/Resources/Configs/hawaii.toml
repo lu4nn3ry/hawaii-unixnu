@@ -1,0 +1,23 @@
+# hawaii.toml - UEFI device configuration for Moto E32 (hawaii / UMS9230)
+#
+# Follows Mu-Silicium layout:
+#   https://unixnu.com/porting/uefi-firmware#device-configuration
+
+[boot_shim]
+requires_kernel_header = true
+
+[uefi_fd]
+base = 0x80800000
+size = 0x400000
+
+[boot_image_kernel]
+kernel_compression = "gzip"
+append_dtb = true
+
+[boot_image]
+header_version = 2
+base = 0
+kernel_offset = 0x8000
+ramdisk_offset = 0x5400000
+tags_offset = 0x100
+pagesize = 2048

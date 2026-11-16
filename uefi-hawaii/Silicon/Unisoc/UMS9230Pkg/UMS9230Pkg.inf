@@ -1,0 +1,26 @@
+# UMS9230Pkg.inf - SoC package for Unisoc UMS9230 / T606
+#
+# Follows Mu-Silicium Silicon layout:
+#   https://unixnu.com/porting/uefi-firmware#mu-silicium-layout
+
+[Defines]
+  INF_NAME            =  UMS9230Pkg
+  INF_GUID            =  00000000-0000-0000-0000-000000000001
+  INF_VERSION         =  0.1
+  BASE_NAME           =  UMS9230Pkg
+  FILE_GUID           =  00000001-0000-0000-0000-000000000002
+  PACKAGE_TYPE        =  INF
+  ARCHITECTURE        =  AARCH64
+  CLASS               =  PEIM
+  DEPEX               =  0x00000001   /* Dxe */
+  DEPEX_FILE_TYPE     =  SECTION_FIXED
+
+[Sources]
+  NULL
+
+[Packages]
+  MdePkg/MdePkg.dec
+
+[LibraryClasses]
+
+[BuildOptions]

@@ -18,12 +18,12 @@ next_action = ["Publish soc/UniXNU-ums9230-common, pin its commit, then re-run d
 
 [[area]]
 id = "firmware"
-status = "not-started"
+status = "skeleton"
 components = ["DarwinBoot"]
 paths = ["proprietary-files.txt", "uefi/**", ".github/workflows/build.yml"]
-inputs = ["Boot chain: BootROM -> FDL -> splloader -> U-Boot + cboot -> boot partition. No UEFI firmware exists for UMS9230; BootShim trampoline must be written from scratch.", "EDK2 stack: microsoft/mu_basecore release/202608, mu_plus, mu_oem_sample, UniXNU/uefi-sheng Silicon/Silicium (as template for Unisoc)."]
-limits = ["No UEFI for UMS9230; BootShim handoff address, FDT in x0, UART baud and framebuffer state are unverified for cboot on UMS9230.", "An empty boot.img ramdisk means the UniXNU menu has no payload entries; a payload FAT (kernel.macho + .adt + unixnu.toml) needs a macOS XNU build."]
-next_action = ["Write BootShim cboot trampoline and EDK2 DSC/FDF for hawaiiPkg; verify FD builds on host."]
+inputs = ["Boot chain: BootROM -> FDL -> splloader -> U-Boot + cboot -> boot partition. No UEFI firmware exists for UMS9230; BootShim trampoline written at uefi-hawaii/BootShim/BootShim.S (UNVERIFIED addresses).", "EDK2 stack: microsoft/mu_basecore release/202608, mu_plus, mu_oem_sample, UniXNU/uefi-sheng Silicon/Silicium (as template for Unisoc). UEFI files: hawaii.toml, mkbootimg.py, hawaii.dsc, hawaii.fdf, hawaiiPkg.inf, UMS9230Pkg.inf."]
+limits = ["No UEFI for UMS9230; BootShim handoff address (0x80800000) and FD_SIZE (0x400000) are UNVERIFIED for cboot on UMS9230. Must be measured from vendor uboot.bin before first flash.", "An empty boot.img ramdisk means the UniXNU menu has no payload entries; a payload FAT (kernel.macho + .adt + unixnu.toml) needs a macOS XNU build."]
+next_action = ["Verify FD_BASE and FD_SIZE from vendor uboot.bin; build FD on host with EDK2; fastboot boot the CI boot.img artifact on hardware, capture UART1/ramoops."]
 
 [[area]]
 id = "cpu"

@@ -1,0 +1,14 @@
+schema_version = 2
+
+[soc]
+name = "UMS9230"
+description = "Unisoc UMS9230 / Tiger T606 (qogirl6): 2x Cortex-A75 + 6x Cortex-A55, Mali-G57, GICv3, ARM arch timer"
+source_repository = "https://github.com/lu4nn3ry/hawaii-unixnu"
+source_revision = "main"
+hardware_data = "vendor boot_b DTB, motorola-moto-e32-root kernel config"
+
+[components]
+include = [
+  "ArmDTPlatform",
+  "ArmCpu",
+]

@@ -1,0 +1,41 @@
+# hawaii.fdf - EDK2 FDF for Moto E32 (hawaii / UMS9230)
+#
+# Follows Mu-Silicium layout:
+#   https://unixnu.com/porting/uefi-firmware#dsc-and-fdf
+
+[Defines]
+  STACK_SIZE      = 0x40000
+  HEAP_SIZE       = 0x100000
+  FD_SIZE         = 0x400000
+  FD_BASE_ADDRESS = 0x80800000
+
+[Fds]
+  SILICIUM_UEFI.fd
+
+[Files  SILICIUM_UEFI]
+  INF  MdeModulePkg/Universal/CapsuleDxe/CapsuleDxe.inf
+  INF  MdeModulePkg/Universal/BdsDxe/BdsDxe.inf
+  INF  MdeModulePkg/Universal/ConsoleSplitterDxe/ConsoleSplitterDxe.inf
+  INF  MdeModulePkg/Universal/MonitorDxe/MonitorDxe.inf
+  INF  MdeModulePkg/Universal/Variable/RuntimeDxe/VariableRuntimeDxe.inf
+  INF  MdeModulePkg/Universal/DevicePathDxe/DevicePathDxe.inf
+  INF  MdeModulePkg/Universal/LoadPe32Dxe/LoadPe32Dxe.inf
+  INF  MdeModulePkg/Universal/UnicodeCollationDxe/UnicodeCollationDxe.inf
+  INF  MdeModulePkg/Universal/Disk/DiskIoDxe/DiskIoDxe.inf
+  INF  MdeModulePkg/Universal/Disk/PartitionDxe/PartitionDxe.inf
+  INF  FatPkg/EnhancedFatDxe/Fat.inf
+
+  ## Required UniXNU/DarwinBoot modules
+  INF  UniXNUPkg/Application/UniXNU/UniXNU.inf
+  INF  UniXNUPkg/Driver/UniXNUDxe/UniXNUDxe.inf
+  INF  DarwinBootPkg/Driver/DarwinBoot.inf
+  INF  UniXNUPkg/Driver/UniXNURamDiskDxe/UniXNURamDiskDxe.inf
+
+  ## Platform and SoC
+  INF  Platforms/Unisoc/hawaiiPkg/hawaiiPkg.inf
+  INF  Silicon/Unisoc/UMS9230Pkg/UMS9230Pkg.inf
+
+  FV_IMAGE_MINIMUM_ALIGNMENT = 0x1000
+
+[Guides]
+  gEfiCallerIdGuid
