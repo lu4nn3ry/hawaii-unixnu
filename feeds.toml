@@ -14,3 +14,24 @@
 name = "ums9230"
 kind = "soc"
 local = "soc/UniXNU-ums9230-common"
+
+# Board-owned driver components (not in the official UniXNU catalog yet).
+[[source]]
+name = "SdhciBlock"
+kind = "driver"
+local = "components/SdhciBlock"
+
+[[source]]
+name = "MaliG57"
+kind = "driver"
+local = "components/MaliG57"
+
+[[source]]
+name = "WcnWifi"
+kind = "driver"
+local = "components/WcnWifi"
+
+[[source]]
+name = "GoodixTouch"
+kind = "driver"
+local = "components/GoodixTouch"
