@@ -1,0 +1,17 @@
+[[component]]
+id = "SdhciBlock"
+kind = "driver"
+function = "Unisoc UMS9230 SDHCR11 eMMC block transport"
+scope = "storage"
+repository = "https://github.com/lu4nn3ry/hawaii-unixnu"
+revision = "main"
+path = "drivers/SdhciBlock"
+hardware = ["Unisoc UMS9230 SDHCR11 SDHCI 0x71400000", "eMMC HS400ES, ADMA2"]
+os_abi = ["ipados-17.7.11-21H461"]
+board_dependencies = ["eMMC GPT partition table", "clock gating from vendor kernel"]
+dependencies = []
+source_files = ["NativeSdhciBlock.cpp"]
+runtime_identifiers = ["NativeSdhciBlock", "NativeSdhciBlock.cpp"]
+build_stage = "kernel"
+build = ["scripts/build-sdhci-block.py", "SdhciBlock"]
+outputs = ["out/sdhciblock/libSdhciBlock.a"]

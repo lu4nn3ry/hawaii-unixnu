@@ -14,3 +14,10 @@
 name = "ums9230"
 kind = "soc"
 local = "soc/UniXNU-ums9230-common"
+
+# Board-owned driver components (not in the official UniXNU catalog yet).
+[[source]]
+name = "SdhciBlock"
+kind = "driver"
+local = "drivers/SdhciBlock"
+
