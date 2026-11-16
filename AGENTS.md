@@ -61,5 +61,13 @@ Research results (2026-11-16):
 | Wi-Fi (WCN SDIO) | None found in UniXNU repos | NO - no open-source implementation | Needs new driver |
 | Touch (Goodix gt9xx) | None found in UniXNU repos | NO - no open-source implementation | Needs new driver |
 
+Linux kernel mainline for UMS9230/T606 (source for drivers):
+
+| Source | Repository | Status | Notes |
+|--------|-----------|--------|-------|
+| ums9230-mainline Linux | `codeberg.org/ums9230-mainline/linux` branch `ums9230` | ACTIVE | UFS, DPU/DSI, PMIC sc2730, pinctrl, GPIO/EIC working |
+| itel S681LN board port | `github.com/fahrulseptiana/s681ln-mainline` | ACTIVE | UMS9230/T616, same family as T606; boots to userspace |
+| postmarketOS/Nura | `codeberg.org/ums9230-mainline` | ACTIVE | SoC support already in mainline |
+
 Report commands, results, required local inputs, and hardware checkpoints.
 Write concise English describing current behavior.
