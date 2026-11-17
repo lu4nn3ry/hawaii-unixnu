@@ -1,0 +1,35 @@
+schema = 1
+
+[kit]
+name = "hawaii"
+version = "1.0.0"
+description = "Motorola Moto E32 (XT2227-1) device kit"
+
+[match]
+arch = "AARCH64"
+fdt_compatible = ["motorola,hawaii", "sprd,ums9230"]
+firmware_vendor = ["motorola"]
+
+[[driver]]
+file = "SdhciBlock.efi"
+args = ""
+
+[[driver]]
+file = "WcnWifi.efi"
+args = ""
+
+[[driver]]
+file = "Audio.efi"
+args = ""
+
+[[driver]]
+file = "Power.efi"
+args = ""
+
+[[driver]]
+file = "GoodixTouch.efi"
+args = ""
+
+[[driver]]
+file = "MaliG57.efi"
+args = ""

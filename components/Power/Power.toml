@@ -1,0 +1,18 @@
+schema_version = 1
+
+[[component]]
+id = "Power"
+kind = "driver"
+function = "Unisoc UMS9230 SC2730 PMIC power management driver for XNU"
+scope = "power"
+revision = "main"
+path = "drivers/Power"
+hardware = ["sprd,sc2731-regulator", "sc2730-fgu", "sc2730-fast-charger", "bq2597x"]
+os_abi = ["ipados-17.7.11-21H461"]
+board_dependencies = ["SC2730 PMIC", "regulator map", "charger control"]
+dependencies = []
+source_files = ["NativePower.cpp"]
+runtime_identifiers = ["NativePower.cpp", "org.blu-sharky.Power", "Power"]
+build_stage = "kernel"
+build = ["build-arm-driver.py", "Power"]
+outputs = ["build/power/libPower.a"]

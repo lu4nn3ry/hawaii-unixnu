@@ -20,3 +20,4 @@ local.toml
 %SystemDrive%/
 .local/
 dts/test*.dts
+dts/proc_device_tree_root/

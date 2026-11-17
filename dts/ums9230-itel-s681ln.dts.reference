@@ -1,0 +1,421 @@
+diff --git a/arch/arm64/boot/dts/sprd/ums9230-itel-s681ln.dts b/arch/arm64/boot/dts/sprd/ums9230-itel-s681ln.dts
+new file mode 100644
+index 000000000..f01cda02b
+++ b/arch/arm64/boot/dts/sprd/ums9230-itel-s681ln.dts
+// SPDX-License-Identifier: (GPL-2.0 OR MIT)
+/*
+ * itel S681LN — Unisoc Tiger T616 / UMS9230 ("qogirl6")
+ *
+ * Target tree: codeberg.org/ums9230-mainline/linux, branch `ums9230`
+ * (that fork already provides ums9230.dtsi, sc2730.dtsi, drivers/clk/sprd/
+ *  ums9230-clk.c and a working board file ums9230-reeder-s19mps.dts).
+ *
+ * This file is derived from ums9230-reeder-s19mps.dts (Otto Pflüger, 2024)
+ * with this device's panel/touch/serial swapped in from the vendor DTB
+ * (s681ln-vendor.dts, dumped from /sys/firmware/fdt on the unit).
+ *
+ * Status: NOT BOOT-TESTED. Two drivers do not exist upstream yet, marked TODO:
+ *   - panel: novatek,nt37705  (nearest existing: panel-novatek-nt37700f.c)
+ *   - touch: focaltech,ft3681 (nearest existing: edt-ft5x06)
+ */
+
+/dts-v1/;
+
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/interrupt-controller/irq.h>
+#include "ums9230.dtsi"
+#include "sc2730.dtsi"
+
+/ {
+	model = "itel S681LN";
+	/* vendor value: LK needs a well-formed sc-id or it refuses the
+	 * fix dtb ("Property sprd,sc-id is not formatted correctly").
+	 * The vendor dtbo overlay is neutralised separately (empty dtbo_a),
+	 * because its __fixups__ reference labels this tree lacks. */
+	sprd,sc-id = "ums9230 1000 1000";
+	compatible = "itel,s681ln", "sprd,ums9230";
+
+	aliases {
+		serial0 = &uart0;
+		serial1 = &uart1;	/* VENDOR: /soc/aon/pinctrl ... ap-uart1 */
+		i2c0 = &i2c0;
+		i2c1 = &i2c1;
+		i2c2 = &i2c2;
+		i2c3 = &i2c3;		/* touch */
+		i2c4 = &i2c4;
+		i2c5 = &i2c5;
+		i2c6 = &i2c6;
+	};
+
+	/* VENDOR fix-dtb: reg = <0x00 0x80000000 0x02 0x00> (LK fixes the real
+	 * size up at boot). Without this node the kernel has no RAM and dies
+	 * silently — the ramdisk sits at 0xa0000000, well above 0x80000000+512M.
+	 */
+	memory@80000000 {
+		device_type = "memory";
+		reg = <0x0 0x80000000 0x2 0x0>;
+	};
+
+	chosen {
+		/* VENDOR: the stock console is uart1; serial1 = &uart1 */
+		stdout-path = "serial1:115200n8";
+
+		/* simplefb: name must be framebuffer@<addr>, and plain reg is the
+		 * most compatible form (memory-region + no-map is fussier).
+		 * LK leaves its splash here, so fbcon can appear without the DPU/DSI
+		 * or panel drivers working. */
+	};
+
+	/* Root-level: a /chosen child was rejected with -EINVAL before the
+	 * driver ran. Uses memory-region so simpledrm takes its System-RAM
+	 * path (devm_memremap); with plain reg it tries ioremap_wc() on RAM
+	 * and fails with -ENOMEM. */
+	framebuffer@9e000000 {
+		/* Disabled: simpledrm registered first and fbcon bound to it
+		 * ("Console: switching to colour frame buffer device 135x150"),
+		 * so console output went to 0x9e000000 while sprd-drm's plane
+		 * scanned its own GEM buffer (DPU[030] = 0x90000000) -> the panel
+		 * showed a black frame. With simpledrm gone, fbcon binds to
+		 * sprddrmfb and text lands in the buffer the DPU actually sends. */
+		status = "disabled";
+		compatible = "simple-framebuffer";
+		reg = <0x0 0x9e000000 0x0 0x1400000>;
+		width = <1080>;
+		height = <2400>;
+		stride = <(1080 * 4)>;
+		format = "a8r8g8b8";
+	};
+
+
+	/* VENDOR: the panel rails are switched by PMIC EIC GPIOs, not by PMIC
+	 * regulators — so mainline models them as GPIO-controlled fixed
+	 * regulators. Vendor node: vci_3v-gpio = <&eic 0x98>,
+	 * vlcm_1v35-gpio = <&eic 0x72>, bias_sgm3849_en-gpio = <&eic 0xa5>. */
+	vci_3v: regulator-vci-3v {
+		compatible = "regulator-fixed";
+		regulator-name = "vci_3v";
+		regulator-min-microvolt = <3000000>;
+		regulator-max-microvolt = <3000000>;
+		/* Confirmed on the stock kernel via /sys/kernel/debug/gpio:
+		 * gpio-216 | vci_3v  -> AP GPIO 216 - 64 = 0x98 */
+		/* Rail truth, measured with the panel ON in the stock kernel:
+		 *   gpio-216 vci_3v          out hi
+		 *   gpio-178 vlcm_1v35       out hi
+		 *   gpio-229 bias_sgm3849_en out hi
+		 * i.e. HIGH = enabled (the earlier "out lo" reading was taken with
+		 * the panel off and led to a wrong ACTIVE_LOW conclusion).
+		 * Still not driven here: toggling them without the full panel
+		 * power-on sequence (rails -> reset -> DSI init) breaks init with
+		 * "sending generic data 51 00 00 failed: -110". */
+		regulator-boot-on;
+	};
+
+	vlcm_1v35: regulator-vlcm-1v35 {
+		compatible = "regulator-fixed";
+		regulator-name = "vlcm_1v35";
+		/* stock: gpio-178 | vlcm_1v35 -> AP GPIO 178 - 64 = 0x72 */
+		regulator-min-microvolt = <1350000>;
+		regulator-max-microvolt = <1350000>;
+		/* GPIO enable dropped for bring-up: the PMIC EIC comes up
+		 * as an MFD cell, so the DT phandle has no gpiochip yet.
+		 * LK already powers these rails. */
+		regulator-boot-on;
+	};
+
+	panel_bias: regulator-panel-bias {
+		compatible = "regulator-fixed";
+		regulator-name = "panel_bias_sgm3849";
+		/* stock: gpio-229 | bias_sgm3849_en -> AP GPIO 229 - 64 = 0xa5 */
+		/* GPIO enable dropped for bring-up: the PMIC EIC comes up
+		 * as an MFD cell, so the DT phandle has no gpiochip yet.
+		 * LK already powers these rails. */
+		regulator-boot-on;
+	};
+
+	reserved-memory {
+
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		/* LK's lcd_base. Reserved so the allocator won't reuse it; NOT
+		 * no-map, because simpledrm memremaps it. */
+		framebuffer_region: framebuffer-region@9e000000 {
+			reg = <0x0 0x9e000000 0x0 0x1400000>;
+			no-map;		/* not System RAM -> memremap/ioremap allowed */
+		};
+
+		/* VENDOR: logobuffer@9e000000 — kept as the framebuffer region,
+		 * same address the reeder board uses. */
+		/* no-map removed: the region stays reserved (so the page
+		 * allocator won't hand it out) but is mapped, allowing the
+		 * simple-framebuffer driver to claim and ioremap it. */
+
+		/* VENDOR: sml-mem@b0000000 / tos-mem@b0040000 — the secure world
+		 * (EL3 monitor + Trusty). Must not be touched: on this SoC the
+		 * TEE is live and owns S-EL1. */
+		sml_region: sml-mem@b0000000 {
+			reg = <0x0 0xb0000000 0x0 0x40000>;
+			no-map;
+		};
+
+		tos_region: tos-mem@b0040000 {
+			reg = <0x0 0xb0040000 0x0 0x20000>;
+			no-map;
+		};
+	};
+};
+
+/* Console: VENDOR shows the stock kernel logging on uart1. */
+&uart0 {
+	status = "okay";
+};
+
+&uart1 {
+	status = "okay";
+};
+
+/* Storage: the device boots from UFS, not eMMC. */
+&ufs {
+	status = "okay";
+};
+
+/*
+ * Display: Novatek NT37705, Tianma, 1080x2400, 192 MHz pixel clock.
+ * TODO: write panel-novatek-nt37705.c — the init sequence is available from the
+ * vendor DT as sprd,*‑command byte strings in the lcd_nt37705_tm_mipi_fhdp node
+ * of s681ln-vendor.dts; the nearest mainline driver to copy is
+ * panel-novatek-nt37700f.c (same family).
+ */
+&dsi {
+	status = "okay";
+
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	panel@0 {
+		compatible = "novatek,nt37705";		/* TODO: driver */
+		reg = <0>;
+
+		/* VENDOR: reset-gpio = <&pmic_eic 0x32 0>; vci_3v = <&pmic_eic 0x98>;
+		 *         vlcm_1v35 = <&pmic_eic 0x72>; bias_sgm3849_en = <&pmic_eic 0xa5>.
+		 * Mainline models these as gpios/regulators; decide when writing
+		 * the driver. Backlight on this panel is DSI command based
+		 * (vendor sprd,max-level / default-brightness), not PWM. */
+		/* Corruption note: the line is gpio-114 (AP GPIO 0x32), confirmed on
+		 * the stock kernel. It is deliberately NOT driven yet: sprd_dsi keeps
+		 * the bootloader's DSI state and skips sprd_dsi_init(), so pulsing
+		 * the panel reset leaves the panel un-programmed and the screen dark
+		 * (measured: dark screen after enabling this). Enable it together
+		 * with a full DSI/panel re-init, not before. */
+		power-supply = <&vci_3v>;
+
+		port {
+			panel_in: endpoint {
+				remote-endpoint = <&dsi_out>;
+			};
+		};
+	};
+};
+
+&dsi_out {
+	remote-endpoint = <&panel_in>;
+};
+
+/*
+ * Touch: FocalTech FT3681 on i2c3 (VENDOR: i2c@0x20100000, addr 0x38).
+ * TODO: no ft3681 driver upstream; edt-ft5x06 is the nearest starting point.
+ * VENDOR GPIOs: irq = <0x119 0x10>, reset = <&pmic_eic 0x91>, avdd = <&pmic_eic 0x70>.
+ * The irq phandle in the vendor tree is not &ap_gpio — verify against
+ * ap_gpio's phandle before trusting the number below.
+ */
+&i2c3 {
+	status = "okay";
+
+	/* The vendor node (i2c@20100000) carries
+	 *   reset-names = "i2c_rst";  resets = <&apapb_gate 0x0b>;
+	 * and 0x0b is RESET_AP_APB_I2C3_SOFT_RST. Without it the controller is
+	 * never taken out of reset: every transfer times out (-ETIMEDOUT, 1 s
+	 * each) even though the client is enumerated, which is exactly what the
+	 * touch probe measured on registers 0xa3/0xa6/0xa8. */
+	resets = <&apapb_gate RESET_AP_APB_I2C3_SOFT_RST>;
+	reset-names = "i2c_rst";
+
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	touchscreen@38 {
+		compatible = "focaltech,ft3681";	/* TODO: driver */
+		reg = <0x38>;
+
+		/* Vendor /sys/kernel/debug/gpio on the stock kernel:
+		 *   gpio-209 | fts_reset_gpio   -> AP GPIO 209 - 64 = 0x91
+		 *   gpio-384 | fts_irq_gpio     -> eic-async 384 - 368 = 16
+		 * The vendor DT numbers are controller-relative, so these are AP
+		 * GPIOs, NOT PMIC EIC lines (which only span 16). */
+		interrupt-parent = <&eic_async>;
+		interrupts = <16 IRQ_TYPE_EDGE_FALLING>;
+		/* ACTIVE_HIGH: the driver does reset=0 (assert), rails on,
+		 * reset=1 (release), then reads the boot id. The stock kernel idles
+		 * this line "out hi", so 1 must mean physical high -- with
+		 * ACTIVE_LOW we were holding the chip in reset during the read,
+		 * hence "boot id read failed (-5)". */
+		reset-gpios = <&ap_gpio 0x91 GPIO_ACTIVE_HIGH>;
+		focaltech,skip-reset;	/* keep the firmware LK loaded */
+
+		/* Vendor node (read from the stock kernel's of_node):
+		 *   vtouch-supply = <&vddldo1>            <- PMIC LDO, the chip's supply
+		 *   focaltech,avdd-gpio = <&ap_gpio 0x70 0>
+		 *   focaltech,reset-gpio = <&ap_gpio 0x91 0>
+		 *   focaltech,irq-gpio = <&eic_async 0x10 0>
+		 */
+		vdd-supply = <&vddldo1>;
+		/* AVDD: stock kernel holds gpio-176 (AP GPIO 0x70) high. Claimed
+		 * directly by the driver (devm_gpiod_get_optional "avdd"); the
+		 * earlier regulator-fixed wrapper was what deferred forever. */
+		avdd-gpios = <&ap_gpio 0x70 GPIO_ACTIVE_HIGH>;
+
+		touchscreen-size-x = <1080>;
+		touchscreen-size-y = <2400>;
+	};
+
+
+	/* Moved out of /chosen: the platform bus rejected the /chosen child
+	 * with -EINVAL before simplefb_probe() was ever entered. */
+
+};
+
+/*
+ * Everything below is intentionally left out until the basics boot; copy the
+ * corresponding nodes from ums9230-reeder-s19mps.dts (same SoC) when needed:
+ *   - regulators / PMIC consumers (sc2730.dtsi provides the rails)
+ *   - sensor i2c buses (0x200d0000, 0x200e0000, 0x20220000)
+ *   - Wi-Fi/BT (sc2355) and modem — both need firmware blobs from stock
+ *   - USB (dwc3 + sc2730 typec)
+ */
+
+/* Display pipeline: the SoC dtsi ships both disabled. The board enables the
+ * DSI host (with its NT37705 panel child); these two complete the chain
+ * dpu -> dsi -> panel. */
+&dpu {
+	status = "okay";
+
+	/* VENDOR: the DPU node, not the DSI node, owns the DSI isolation switch
+	 * and the DSI div6 byte-clock gate (vendor: <0x2a 0x00>, <0x2a 0x01> =
+	 * the g1-pll provider). Without them the DSI TX FIFO never drains and
+	 * every DCS write times out with -110. */
+	/* VENDOR clock order: clk_dpu_core (dispc0-clk, 384 MHz) and clk_dpu_dpi
+	 * (dispc0-dpi-clk, 192 MHz) are both required -- with only the AHB bus
+	 * clock the DPI sub-block ignores writes. */
+	clocks = <&apahb_gate CLK_DISPC_EB>,
+		 <&ap_clk CLK_DISPC0>,
+		 <&ap_clk CLK_DISPC0_DPI>,
+		 <&pll0 CLK_DSI_ISO_SW_EN>,
+		 <&pll0 CLK_DSI_DIV6CLK_GATE>;
+	clock-names = "core", "dispc", "dpi", "dsi-iso-en", "dsi-div6";
+
+	/* VENDOR disp-reset-syscon = <&glbregs 0x04 0x02>: DPU+DSI soft reset. */
+	sprd,disp-reset-syscon = <&ap_ahb_regs>;
+};
+
+&disp {
+	status = "okay";
+};
+
+/* USB peripheral (musb): gives an interactive console over the USB port as
+ * /dev/ttyGS0 (g_serial), which is the only input path on this board since the
+ * panel has no keyboard and UART pads are out of scope. */
+&usb {
+	status = "okay";
+	/* MUST be "otg": drivers/usb/musb/sprd.c only calls
+	 * sprd_otg_switch_init() when musb->port_mode == MUSB_OTG, so with
+	 * "peripheral" no role switch is registered and gpio-usb-b-connector
+	 * defers forever ("usb-conn-gpio: failed to get role switch").
+	 * Default role is still device, via role-switch-default-mode. */
+	dr_mode = "otg";
+	role-switch-default-mode = "peripheral";
+
+	/* The sprd musb glue registers a usb_role_switch on this node; the
+	 * connector finds it through the graph, exactly like the vendor's
+	 * extcon-usb-gpio wired to the PMIC EIC VBUS line. */
+	usb-role-switch;
+	port {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		usb_role_ep: endpoint@0 {
+			reg = <0>;
+			remote-endpoint = <&usb_con_ep>;
+		};
+	};
+};
+
+/* VBUS cable detect: PMIC EIC line (vendor: vbus-gpio = <&eic 0>).
+ * Declared via &{/} because a new node cannot live outside the root node. */
+&{/} {
+
+	usb_con: usb-connector {
+		compatible = "gpio-usb-b-connector", "usb-b-connector";
+		/* Confirmed on the stock kernel: gpio-48 | vbus, i.e. PMIC EIC
+		 * line 0, active high ("in hi" with the cable attached). The earlier
+		 * ACTIVE_LOW attempt is what kept musb in host mode. */
+		vbus-gpio = <&pmic_eic 0 GPIO_ACTIVE_HIGH>;
+
+		port {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			usb_con_ep: endpoint@0 {
+				reg = <0>;
+				remote-endpoint = <&usb_role_ep>;
+			};
+		};
+	};
+};
+
+/* USB2 PHY: SoC node defaults to disabled, but musb needs it
+ * ("musb-sprd: failed to get phy" without it). Driver: phy-sprd-usb2. */
+&hsphy {
+	status = "okay";
+};
+
+/* USB analog data-line mux, mirroring the vendor node
+ * usbpinmux { compatible="sprd,qogirl6-usbpinmux";
+ *             usb-mux-syscon = <&glbregs 0x374 0x0f>; }.
+ * Without it musb registers a UDC but the host never sees an attach. */
+&aon_apb_regs {
+	usbpinmux: usbpinmux {
+		compatible = "sprd,ums9230-usbpinmux";
+		usb-mux-syscon = <&aon_apb_regs 0x374 0x0f>;
+		/* The bootloader's own command line states the mux value:
+		 *   androidboot.usbmux=0xf
+		 * That is the value the stock kernel runs with, so use it instead of
+		 * the previous guess (1) / brute-force sweep. */
+		sprd,mux-value = <0x0f>;
+		/* Vendor node: vdd-supply = <&vddusb33>; sprd,vdd-voltage = 3.3 V.
+		 * The analog USB data-line switch is powered from this rail; without
+		 * it the mux register is written but the lines stay disconnected, so
+		 * the controller advertises D+ (POWER 0xe0, SOFTCONN set) and the
+		 * host still sees nothing. */
+		vdd-supply = <&vddusb33>;
+		sprd,vdd-voltage = <3300000>;
+	};
+};
+
+/* Touch supply: the stock kernel powers the FT3681 from &vddldo1
+ * (vtouch-supply). In the mainline log vddldo1 never appeared in
+ * /sys/class/regulator, and an unpowered touch chip clamps SDA/SCL -- which is
+ * exactly the measured symptom: -ETIMEDOUT on every i2c transfer with ZERO
+ * controller interrupts, even for a raw userspace read. Keep it on while
+ * bringing touch up. */
+&vddldo1 {
+	/* 2.8 V: FocalTech touch controllers run their analog domain at 2.8-3.0 V.
+	 * At the LDO's default 1.8 V the bus ACKs but every register reads 0x3f
+	 * (measured: 0xa3/0xa6/0xa8/0x00 all 0x3f) -- a supply-level mismatch
+	 * rather than a protocol problem. */
+	regulator-name = "vddldo1";
+	regulator-min-microvolt = <2800000>;
+	regulator-max-microvolt = <2800000>;
+	regulator-always-on;
+	regulator-boot-on;
+};

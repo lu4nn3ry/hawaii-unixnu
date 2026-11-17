@@ -136,7 +136,7 @@ IOService *NativeWcnWifi::probe(IOService *provider, SInt32 *score) {
             size_t length = 0;
             while (length < remaining && bytes[length] != '\0') ++length;
             if ((length == sizeof("unisoc,wcn-wifi") - 1 && memcmp(bytes, "unisoc,wcn-wifi", length) == 0) ||
-                (length == sizeof("sprd,wcn-wifi") - 1 && memcmp(bytes, "sprd,wcn-wifi", length) == 0)) {
+                (length == sizeof("sprd,sc2355-wifi") - 1 && memcmp(bytes, "sprd,sc2355-wifi", length) == 0)) {
                 matched = true;
                 break;
             }

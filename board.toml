@@ -64,18 +64,21 @@ packages = [
 [firmware.defines]
 DEVICE_MODEL = "hawaii"
 ENABLE_SECUREBOOT = "0"
+FD_BASE = "0x80800000"
+FD_SIZE = "0x400000"
 
-# Stock boot image parameters (Android header v2, measured from boot_b):
-#   header_version 2, pagesize 2048, kernel_addr 0x8000, ramdisk_addr 0x5400000,
+# Stock boot image parameters (Android header v0, parsed from boot_b):
+#   header_version 0, pagesize 2048, kernel_addr 0x8000, ramdisk_addr 0x5400000,
 #   tags_offset 0x100, cmdline console=ttyS1,115200n8 buildvariant=user
 [bootimg.image]
-base = 0
+base = 0x0
 kernel_offset = 0x8000
 ramdisk_offset = 0x5400000
 tags_offset = 0x100
 pagesize = 2048
-header_version = 2
-
+header_version = 0
+kernel_size = 0x182f010
+ramdisk_size = 0x8f53fd
 [payload]
 volume = "UNIXNU"
 size_mib = 192

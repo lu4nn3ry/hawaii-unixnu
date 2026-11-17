@@ -5,7 +5,6 @@ id = "MaliG57"
 kind = "driver"
 function = "Mali-G57 (Valhall) kernel GPU driver for XNU"
 scope = "gpu"
-repository = "https://github.com/lu4nn3ry/hawaii-unixnu"
 revision = "main"
 path = "drivers/MaliG57"
 hardware = ["Mali-G57", "Valhall", "Unisoc UMS9230"]

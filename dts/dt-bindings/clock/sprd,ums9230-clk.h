@@ -1,0 +1,53 @@
+
+#ifndef _DT_BINDINGS_CLOCK_SPRD_UMS9230_CLK_H
+#define _DT_BINDINGS_CLOCK_SPRD_UMS9230_CLK_H
+#define CLK_UART0_EB 0
+#define CLK_UART1_EB 1
+#define CLK_UART2_EB 2
+#define CLK_AP_I2C0 3
+#define CLK_AP_I2C1 4
+#define CLK_AP_I2C2 5
+#define CLK_AP_I2C3 6
+#define CLK_AP_I2C4 7
+#define CLK_AP_SPI0 8
+#define CLK_AP_SPI1 9
+#define CLK_AP_SPI2 10
+#define CLK_AP_SPI3 11
+#define CLK_SDIO0_2X 12
+#define CLK_SDIO1_2X 13
+#define CLK_EMMC_2X 14
+#define CLK_UFS_HCK 15
+#define CLK_UFS_PCK 16
+#define CLK_GPU_CORE_EB 17
+#define CLK_GPU_MEM_EB 18
+#define CLK_GPU_SYS_EB 19
+#define CLK_DISPC0_DPI 20
+#define CLK_DSI_EB 21
+#define CLK_UFS_REG_EB 22
+#define CLK_UFS_EB 23
+#define CLK_AP_I2C5 24
+#define CLK_AP_I2C6 25
+#define CLK_I2C0_EB 26
+#define CLK_I2C1_EB 27
+#define CLK_I2C2_EB 28
+#define CLK_I2C3_EB 29
+#define CLK_I2C4_EB 30
+#define CLK_I2C5_EB 31
+#define CLK_I2C6_EB 32
+#define CLK_SDIO0_EB 33
+#define CLK_SDIO1_EB 34
+#define CLK_EMMC_EB 35
+#define CLK_SPI0_EB 36
+#define CLK_SPI1_EB 37
+#define CLK_SPI2_EB 38
+#define CLK_SPI3_EB 39
+#define CLK_DISPC_EB 40
+#define CLK_RPLL 41
+#define CLK_LPLL_409M6 42
+#define CLK_TWPLL_192M 43
+#define CLK_TWPLL_256M 44
+#define CLK_ISPPLL_468M 45
+#define CLK_AP_UART0 46
+#define CLK_AP_UART1 47
+#define CLK_AP_UART2 48
+#endif

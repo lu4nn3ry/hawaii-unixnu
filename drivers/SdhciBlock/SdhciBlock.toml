@@ -3,7 +3,6 @@ id = "SdhciBlock"
 kind = "driver"
 function = "Unisoc UMS9230 SDHCR11 eMMC block transport"
 scope = "storage"
-repository = "https://github.com/lu4nn3ry/hawaii-unixnu"
 revision = "main"
 path = "drivers/SdhciBlock"
 hardware = ["Unisoc UMS9230 SDHCR11 SDHCI 0x71400000", "eMMC HS400ES, ADMA2"]
