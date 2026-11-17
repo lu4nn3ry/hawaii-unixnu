@@ -10,17 +10,11 @@
   BASE_NAME           =  hawaiiPkg
   FILE_GUID           =  00000002-0000-0000-0000-000000000004
   PACKAGE_TYPE        =  INF
+  MODULE_TYPE         =  BASE
   ARCHITECTURE        =  AARCH64
   CLASS               =  PEIM
-  DEPEX               =  0x00000001   /* Dxe */
+  DEPEX               =  0x00000001   # Dxe
   DEPEX_FILE_TYPE     =  SECTION_FIXED
 
 [Sources]
-  NULL
-
-[Packages]
-  MdePkg/MdePkg.dec
-
-[LibraryClasses]
-
-[BuildOptions]
+  hawaiiPkg.c

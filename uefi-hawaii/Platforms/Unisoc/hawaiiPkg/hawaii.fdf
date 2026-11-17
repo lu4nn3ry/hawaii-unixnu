@@ -13,7 +13,6 @@
   SILICIUM_UEFI.fd
 
 [Files  SILICIUM_UEFI]
-  INF  MdeModulePkg/Universal/CapsuleDxe/CapsuleDxe.inf
   INF  MdeModulePkg/Universal/BdsDxe/BdsDxe.inf
   INF  MdeModulePkg/Universal/ConsoleSplitterDxe/ConsoleSplitterDxe.inf
   INF  MdeModulePkg/Universal/MonitorDxe/MonitorDxe.inf
@@ -24,12 +23,6 @@
   INF  MdeModulePkg/Universal/Disk/DiskIoDxe/DiskIoDxe.inf
   INF  MdeModulePkg/Universal/Disk/PartitionDxe/PartitionDxe.inf
   INF  FatPkg/EnhancedFatDxe/Fat.inf
-
-  ## Required UniXNU/DarwinBoot modules
-  INF  UniXNUPkg/Application/UniXNU/UniXNU.inf
-  INF  UniXNUPkg/Driver/UniXNUDxe/UniXNUDxe.inf
-  INF  DarwinBootPkg/Driver/DarwinBoot.inf
-  INF  UniXNUPkg/Driver/UniXNURamDiskDxe/UniXNURamDiskDxe.inf
 
   ## Platform and SoC
   INF  Platforms/Unisoc/hawaiiPkg/hawaiiPkg.inf

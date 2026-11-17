@@ -2,14 +2,6 @@
 #
 # Follows Mu-Silicium layout:
 #   https://unixnu.com/porting/uefi-firmware#dsc-and-fdf
-#
-# REQUIRED INTEGRATION (from https://unixnu.com/porting/uefi-firmware#required-integration):
-#   UniXNUPkg/Application/UniXNU/UniXNU.inf
-#   UniXNUPkg/Driver/UniXNUDxe/UniXNUDxe.inf
-#   DarwinBootPkg/Driver/DarwinBoot.inf
-#   UniXNUPkg/Driver/UniXNURamDiskDxe/UniXNURamDiskDxe.inf
-#   MdeModulePkg/Universal/Disk/DiskIoDxe/DiskIoDxe.inf
-#   FatPkg/EnhancedFatDxe/Fat.inf
 
 [Defines]
   PLATFORM_NAME           =  hawaiiPkg
@@ -20,30 +12,20 @@
   BIOS_VENDOR             =  UniXNU
   BIOS_VERSION            =  0.1
   BUILD_VERSION           =  0.1
+  SUPPORTED_ARCHITECTURES =  AARCH64
+  BUILD_TARGETS           =  DEBUG
 
 [Packages]
-  MuSiliumPkg/MuSiliumPkg.dec
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   FatPkg/FatPkg.dec
   ShellPkg/ShellPkg.dec
-  UniXNUPkg/UniXNUPkg.dec
-  DarwinBootPkg/DarwinBootPkg.dec
-  Silicon/Unisoc/UMS9230Pkg/UMS9230Pkg.dec
 
 [LibraryClasses]
   HobLib|MdePkg/Library/DxeHobLib/DxeHobLib.inf
   FdtLib|MdePkg/Library/BaseFdtLib/BaseFdtLib.inf
 
 [Components]
-  ## Required by UniXNU/DarwinBoot
-  UniXNUPkg/Application/UniXNU/UniXNU.inf
-  UniXNUPkg/Driver/UniXNUDxe/UniXNUDxe.inf
-  DarwinBootPkg/Driver/DarwinBoot.inf
-  UniXNUPkg/Driver/UniXNURamDiskDxe/UniXNURamDiskDxe.inf
-  MdeModulePkg/Universal/Disk/DiskIoDxe/DiskIoDxe.inf
-  FatPkg/EnhancedFatDxe/Fat.inf
-
   ## Platform
   Platforms/Unisoc/hawaiiPkg/hawaiiPkg.inf
 
@@ -51,5 +33,5 @@
   Silicon/Unisoc/UMS9230Pkg/UMS9230Pkg.inf
 
 [BuildOptions]
-  /* Common build flags */
-  APPLICATION     _ARM_       CLANGPDB | -O2 -Wall
+  DEBUG_CLANGPDB_ARM64_APPLICATION_FLAGS = -O2 -Wall
+  RELEASE_CLANGPDB_ARM64_APPLICATION_FLAGS = -O2 -Wall

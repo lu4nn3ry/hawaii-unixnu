@@ -1,40 +1,42 @@
-/* BootShim.S - cboot trampoline for hawaii (Moto E32 / UMS9230)
- *
- * Follows Mu-Silicium layout:
- *   https://unixnu.com/porting/uefi-firmware#mu-silicium-layout
- *
- * The stock bootloader places the firmware volume at FD_BASE and jumps
- * to this trampoline, which relocates EDK2 and transfers control to
- * the UEFI entry point.
- *
- * NOTE: Addresses (FD_BASE, kernel load address) are UNVERIFIED for
- * hawaii cboot. They must be measured from the vendor uboot.bin before
- * first flash attempt.
- */
+_Head:
+  adr   x1, _Payload    /* Set _Entry address */
+  b     _Start          /* Jump to the real code */
 
-.section .text
-.global _start
+#if REQUIRES_KERNEL_HEADER == 1
+_StackBase:
+  .quad FD_BASE         /* Text Offset */
 
-_start:
-    /* Save bootloader handoff state */
-    mrs     x0, mpidr_el1
-    mov     x1, x0
+_StackSize:
+  .quad FD_SIZE         /* Image Size */
+  .quad 0               /* Flags */
+  .quad 0               /* Reserved */
+  .quad 0               /* Reserved */
+  .quad 0               /* Reserved */
+  .ascii "ARM\x64"      /* ARM64 Magic */
+  .long 0               /* Reserved */
+#endif
 
-    /* Set up initial stack */
-    adr     x2, stack_top
-    mov     sp, x2
+_Start:
+  mov   x4, x1
+  ldr   x5, =FD_BASE
+  cmp   x4, x5
+  beq   _Entry
+  ldr   x6,  =FD_SIZE
 
-    /* Jump to EDK2 SEC entry point */
-    /* FD_BASE is compiled in by mkbootimg/clang with -DFD_BASE=... */
-    ldr     x3, =FD_BASE
-    br      x3
+_CopyLoop:
+  ldp   x2, x3, [x4], #16
+  stp   x2, x3, [x5], #16
+  subs  x6, x6, #16
+  b.ne  _CopyLoop
+  ldr   x5, =FD_BASE
 
-.section .data
-.align  4
-stack_top:
-    .zero   0x1000
+_Entry:
+  br    x5
 
-.section .rodata
-.align  4
-FD_BASE:
-    .quad   0x80800000   /* overridden at build time by -DFD_BASE= */
+_Dead:
+  b     _Dead
+
+.text
+.align 4
+
+_Payload:

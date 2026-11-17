@@ -15,7 +15,7 @@ kernel_compression = "gzip"
 append_dtb = true
 
 [boot_image]
-header_version = 2
+header_version = 0
 base = 0
 kernel_offset = 0x8000
 ramdisk_offset = 0x5400000
