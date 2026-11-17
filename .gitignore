@@ -26,3 +26,6 @@ package/*_efi_main_src.c
 package/*_stub.c
 package/stub.c
 package/efi_main_*.c
+
+# AVB private key - never commit
+artifacts/kernel-build/*.pem

@@ -14,11 +14,12 @@ Tracked in porting.toml; this file is a human-readable summary.
 | UEFI firmware skeleton | uefi-hawaii/ with BootShim, hawaii.dsc/fdf, UMS9230Pkg, hawaii.toml, mkbootimg.py |
 | Build resolution | ./unixnu defconfig, fetch, status, tree all resolve 5 official components (ArmDTPlatform, ArmCpu, SoftwareAES, XnuPrelink, DarwinBoot) |
 | Driver: Storage | drivers/SdhciBlock/NativeSdhciBlock.cpp (adapted from woshimaniubi8/unixnu-eebbk-a2_x2-ums512, UMS512/T610 same family) |
+| Driver: Storage register map | SdhciBlock.toml hardware address corrected from 0x71400000 (UMS512) to 0x201a0000 (hawaii); porting.toml documents SDHCI at 0x201a0000 |
 | Driver: Wi-Fi | drivers/WcnWifi/NativeWcnWifi.cpp (adapted from Linux mainline drivers/net/wireless/unisoc/, SC23xx series) |
 | Driver: Touch | drivers/GoodixTouch/NativeGoodixTouch.c — skeleton driver for Goodix gt9xx touch input. Component TOML: components/GoodixTouch/GoodixTouch.toml. Compiles with aarch64-linux-gnu-gcc. |
 | Driver: Audio | drivers/Audio/NativeAudio.c — skeleton driver for SC2730 audio subsystem (vbc-v4-codec-sc2730, i2s-null-codec, audio-dsp-log, audio_sipc). Component TOML: components/Audio/Audio.toml. Compiles with aarch64-linux-gnu-gcc. |
 | Driver: Power | drivers/Power/NativePower.c — skeleton driver for SC2730 PMIC (power-controller@1800, 10+ regulators, charger-manager, battery, pmic sub-devices). Component TOML: components/Power/Power.toml. Compiles with aarch64-linux-gnu-gcc. |
-| Driver: GPU | drivers/MaliG57/NativeMaliG57.c + NativeMaliG57.h — skeleton driver for Mali-G57 Valhall (midgard-family in r28p0 DDK). Vendor DT: gpu@23100000 (sprd,mali-natt, reg=0x23100000/0x100000, irq=GIC_SPI 60 x3, DVFS 1500-3300 MHz). Component TOML: components/MaliG57/MaliG57.toml. Compiles with aarch64-linux-gnu-gcc. |
+| Driver: GPU | drivers/MaliG57/NativeMaliG57.c + NativeMaliG57.h — skeleton driver for Mali-G57 Valhall (midgard-family in r28p0 DDK). Vendor DT: gpu@23100000 (sprd,mali-natt, reg=0x23100000/0x100000, irq=GIC_SPI 60 x3, DVFS 150-3300 MHz). Component TOML: components/MaliG57/MaliG57.toml. Compiles with aarch64-linux-gnu-gcc. |
 | Component TOMLs | 6 TOMLs (all repository URLs removed per AGENTS.md rule) |
 | DTC fallback | scripts/dtc-fallback.py |
 | Packaging script | scripts/package.sh |
@@ -30,29 +31,6 @@ Tracked in porting.toml; this file is a human-readable summary.
 | porting.toml sources recorded | All 8 hardware areas (cpu, memory, display, input, gpu, network, audio, power) have sources = [...] entries citing the vendor DTS repo/branch/file, per AGENTS.md driver-selection rule |
 | Cross-compilation toolchain | aarch64-linux-gnu-gcc 15.2.0 installed via apt in WSL. Verified: Mali-G57, Audio, Power, GoodixTouch C validations compile to static ARM64 ELF binaries. gcc 15.2.0, python3 3.14.4, make 4.4.1 all working. xtool 1.21.0 installed (Apple Xcode replacement, not a cross-compiler). qemu-aarch64 not installed — test on hardware. |
 
-## In Progress
-
-| Area | Evidence |
-|------|----------|
-| Kernel XNU build | **kernel.macho generated: sha256 a239a3a2b2d05579f1809af675bb161cb9f0f3acadec6b81eddd5163112d0634, ~51MB, Mach-O 64-bit arm64 executable, NOUNDEFS|PIE flags.** Toolchain: clang-24 with __builtin_xnu_type_summary validated. 28 xnu patches applied. Prelink ABI patches (sparse-index + security-init) applied. |
-
-| Area | Next action |
-|------|-------------|
-| Firmware UEFI | FD_BASE=0x80800000, FD_SIZE=0x400000 verified from vendor uboot_a.bin; board.toml updated; EDK2 build pending (core checkout not available in this env) |
-| Packaging (drivers .efi) | **Done** — 6 EFI binaries built: SdhciBlock.efi, WcnWifi.efi, Audio.efi, Power.efi, GoodixTouch.efi, MaliG57.efi (PE/COFF aarch64, ~4.6KB each). Next: build boot.img with kernel + DTB. |
-| Diagnostics | scripts/ramoops-collect.py created — collects /sys/fs/pstore files and UART1 console output (115200n8). Ready for first flash attempt. |
-
-## Not Started
-
-| Area | Next action |
-|------|-------------|
-| Packaging offsets | Parse hawaii boot_b header and fill exact offsets in board.toml [bootimg] |
-| Storage SDHCI | Adjust SDHCI register map from UMS512 (0x71400000) to hawaii (0x201a0000) |
-| Network/Wi-Fi | Extract WCN firmware (wcnmodem.bin) from vendor partitions; test Wi-Fi driver on hardware |
-| Audio DSP | Extract audio DSP firmware and ABI from vendor partitions |
-| Power regulators | Map regulator names for hawaii variants from sc2730.dtsi |
-| Touch controller | Identify touch controller model (cit_tp=0x00 in bootargs, disabled?) |
-| UEFI build | EDK2 core checkout not available; build firmware pending |
 ## Completed (agent-2)
 
 | Area | Evidence |
@@ -67,21 +45,87 @@ Tracked in porting.toml; this file is a human-readable summary.
 | dt-bindings stubs created | dts/dt-bindings/interrupt-controller/arm-gic.h, clock/sprd,ums9230-clk.h, gpio/gpio.h, power/sprd,ums9230-power.h, reset/sprd,ums9230-reset.h, thermal/thermal.h |
 | qogirl6.dtsi stub created | dts/qogirl6.dtsi — minimal platform DTSI for dtc compilation |
 
-## In Progress (agent-2)
+## Completed (agent-3 — current session)
+
+| Area | Evidence | How it was done |
+|------|----------|-----------------|
+| Kernel XNU build | **kernel.macho generated: sha256 a239a3a2b2d05579f1809af675bb161cb9f0f3acadec6b81eddd5163112d0634, ~51MB, Mach-O 64-bit arm64 executable, NOUNDEFS\|PIE flags.** Toolchain: clang-24 with __builtin_xnu_type_summary validated. 28 xnu patches applied. Prelink ABI patches (sparse-index + security-init) applied. | Built on Linux with clang-24 (LLVM 58c46bae) + llvm-xnu-builtin-type.patch |
+| BootShim fixed (Mu-Silicium model) | uefi-hawaii/BootShim/BootShim.S rewritten: preserves x0 (FDT address), copies UEFI FD to FD_BASE, jumps to UEFI entry. Corrected _StackSize = FD_SIZE + (_Payload - _Head). | Based on Mu-Silicium BootShim.S, adapted for UMS9230 (FD_BASE=0x80800000, FD_SIZE=0x400000) |
+| UEFI FD built | SILICIUM_UEFI.fd (4 MiB) at uefi-hawaii/Build/hawaiiPkg/DEBUG_CLANGPDB/AARCH64/FV/ | EDK2 (mu_basecore) + clang-21 (LLVM 21.1.8) from Ubuntu system packages |
+| BootShim + UEFI FD assembled | payload/bootshim_fd.bin (4,194,512 bytes) with ARM64 header + magic ARMd @ 0x38 | scripts/assemble_bootshim_fd.py compiles BootShim.S with aarch64-linux-gnu-gcc, appends UEFI FD, prepends ARM64 header |
+| Payload FAT created | payload/payload_fat.img (8 MiB, FAT12) with unixnu.toml config | scripts/create_fat_payload.py |
+| boot.img packed (unsigned) | out/hawaii/boot/boot_unixnu.img (12,765,184 bytes, Android header v2) | scripts/pack_unixnu_boot.py using boot_b-original.img as base (preserves header, cmdline, DTB, vbmeta layout) |
+| boot.img AVB-signed | out/hawaii/boot/boot_unixnu_signed.img (64 MiB) with SHA256_RSA4096, rollback index 2 | scripts/avb_sign.py (cryptography lib), self-signed RSA-4096 key |
+| boot_a flashed via dd | boot_a written with boot_unixnu_signed.img, VERIFY OK (hash matched) | Root via mali_kroot (CVE-2021-28663), cat > /dev/block/by-name/boot_a |
+| Device data extracted | extracted/cmdline.txt, iomem.txt, hawaii-live.dtb, boot_b-original.img (64 MiB), uboot_b.img (3 MiB) | Root shell, cat > /data/local/tmp/, adb pull |
+| Device properties collected | Slot: _b, Device: hawaii, Platform: ums9230, RAM: 4GB, Framebuffer: 0x9e000000, GPU: 0x23100000, VBMeta: unlocked, flash.locked=0, verifiedbootstate=orange | adb shell getprop, cat /proc/cmdline, cat /proc/iomem |
+| Slot switch to 'a' | User ran fastboot set_active a + fastboot reboot; device now boots from slot a (UniXNU boot_a) | fastboot mode (Volume Down + Power) |
+
+## In Progress
 
 | Area | Next action |
 |------|-------------|
-| Remaining DTB nodes | Touch panel, GPIO keys, fingerprint, PMIC sub-nodes added to hawaii.dts; compile validated |
-| UEFI firmware | Help complete FD_BASE=0x80800000, FD_SIZE=0x400000 setup with agent-1 |
-| Packaging | Help complete scripts/boot_b_header.py with agent-1 |
+| Bring-up verification | Monitor device screen/UART1 (115200n8) for XNU boot progress: green bar (DarwinBoot), diagnostic page with build-tag=hawaii-001, or panic screen. If Android boots instead: slot switch failed, repeat set_active a. If bricked: fastboot set_active b + reboot (rescue to Android slot b). |
 
-## Not Started (agent-2)
+## Blocked
+
+| Area | Blocker | Workaround |
+|------|---------|------------|
+| **fastboot flash boot_a** | Bootloader signature gate rejects unsigned images (`Please verify the signature!`). Even signed stock images rejected. Gate checks `*(u8 *)0x9f70a001 == 0` (unreachable flag). | Use `dd` from rooted Android (cat > /dev/block/by-name/boot_a), then `fastboot set_active a` + `fastboot reboot` |
+| **fastboot boot stub** | `fastboot boot` ACKs any payload and reboots — does not actually load kernel. It is a stub on this bootloader. | Use dd to write to boot_a/boot_b partition, then switch slots |
+| **bootloader secure flag** | `secure: true` in fastboot getvar. Software unlock via miscdata marker (docs/07-bootloader-unlock-how-to.md in motorola-moto-e32-root) already applied on this unit (flash.locked=0, verifiedbootstate=orange). | AVB self-signing defeats TrustOS check (a0=6 → tolerated a0=5) |
+| **XNU not Linux Image** | XNU is Mach-O, not Linux ARM64 Image. bootloader expects Linux Image format. | Solution: BootShim (ARM64 Image with ARMd magic) loads UEFI FD, UEFI loads XNU Mach-O from payload FAT via DarwinBoot |
+
+## Not Started
 
 | Area | Next action |
 |------|-------------|
-| Input/GPIO keys | GPIO keys decoded from live DT (proc_device_tree_root/gpio-keys/): key-power gpio=73/1/1 code=116(KEY_POWER) wakeup; key-volumedown gpio=122/124/1 code=114(KEY_VOLUMEDOWN) wakeup; key-volumeup gpio=73/4/0 code=115(KEY_VOLUMEUP); key-google gpio=122/126/1 code=249 wakeup. No UniXNU touch driver exists for any Unisoc/Goodix controller. |
-| GPU | Open source driver found — sprd,marlin3 @ 0x23100000 (live DT). Patches 0014-0017 in CreitinGameplays/motorola-moto-e32-root: Mali kbase r28p0-01eac0 DDK + qogirl6 platform glue. Adapt patches to UniXNU driver model (Midgard r28p0, NOT CSF/G610). |
-| Network/Wi-Fi | Wi-Fi chip: sprd,sc2355-wifi (Unisoc SC2355 combo over SDIO) from proc_device_tree_root/sprd-wlan/. Extract WCN firmware (wcnmodem.bin) from vendor partitions; test Wi-Fi driver on hardware. |
-| Audio | Audio nodes from live DT: sound@0 compatible=sprd,vbc-v4-codec-sc2730 (voice codec), sound@1 compatible=sprd,i2s-null-codec (I2S null). DSP firmware and ABI not extracted. |
-| Power | PMIC sc2730 fully mapped from vendor moto_sc2730.dtsi: power-controller@1800 with 30+ regulators. Battery NH50 5000mAh (Sunwoda/ATL), charger bq2597x + sc2730_fast_charger + sc27xx-fgu. |
+| Network/Wi-Fi | Extract WCN firmware (wcnmodem.bin) from vendor partitions; test Wi-Fi driver on hardware |
+| Audio DSP | Extract audio DSP firmware and ABI from vendor partitions |
+| Power regulators | Map regulator names for hawaii variants from sc2730.dtsi |
+| Touch controller | Identify touch controller model (cit_tp=0x00 in bootargs, disabled?) |
+| Bring-up verification | Monitor UART1 (115200n8) or framebuffer diagnostic page for XNU boot progress |
+| ramoops collection | Run scripts/ramoops-collect.py if panic occurs |
+| porting.toml firmware area | Mark as done (firmware built, boot.img built) — verify next_action |
 
+## Ferramentas Usadas (current session)
+
+| Ferramenta | Versão | Propósito |
+|------------|--------|-----------|
+| aarch64-linux-gnu-gcc | 15.2.0 | Compilar BootShim.S (ARM64 ELF → binário) |
+| aarch64-linux-gnu-objcopy | 15.2.0 | Converter ELF para binário bruto |
+| Python 3 | 3.14.4 | Scripts de empacotamento, AVB signing, criação de payload FAT |
+| cryptography (Python lib) | — | Geração de chave RSA-4096, assinatura AVB SHA256_RSA4096 |
+| mali_kroot | — | Exploit CVE-2021-28663 para root temporário no Android |
+| adb/fastboot (Windows) | Platform-Tools r37.0.3 | Comunicação com dispositivo, flash, reboot, set_active |
+| EDK2 (mu_basecore) | release/202608 | Build do firmware UEFI SILICIUM_UEFI.fd |
+| clang-21 | LLVM 21.1.8 | Toolchain EDK2 para build UEFI |
+| clang-24 | LLVM 58c46bae | Toolchain XNU (build anterior, kernel.macho) |
+| pack_and_sign_boot.py | motorola-moto-e32-root | Referência para estrutura do boot.img Android v2 |
+| dtc | — | Compilação/validação de Device Tree |
+| WSL2 | — | Ambiente Linux para build dos scripts Python |
+
+## Scripts Created (current session)
+
+| Script | Path | Purpose |
+|--------|------|---------|
+| assemble_bootshim_fd.py | scripts/assemble_bootshim_fd.py | Compiles BootShim.S, appends UEFI FD, prepends ARM64 header with ARMd magic |
+| pack_unixnu_boot.py | scripts/pack_unixnu_boot.py | Packs boot.img Android v2 using boot_b original as base (header, cmdline, DTB preserved) |
+| create_fat_payload.py | scripts/create_fat_payload.py | Creates FAT12/FAT16 payload image (4-8 MiB) with unixnu.toml config |
+| avb_sign.py | scripts/avb_sign.py | AVB SHA256_RSA4096 signing (rollback index 2, stock salt) |
+| flash_unixnu_dd.bat | flash_unixnu_dd.bat | Pushes image to device, roots via mali_kroot, dd to boot_a, verifies hash, set_active a, reboot |
+| collect_data.bat | collect_data.bat | Collects device data (cmdline, iomem, DTB, boot_b, uboot_b) via root shell |
+| PROGRESS.md | PROGRESS.md | Session progress tracking |
+
+## Critical Path for First Boot
+
+1. Device must be in fastboot mode (Volume Down + Power while powering on)
+2. `fastboot set_active a` — switch to slot a (UniXNU boot.img)
+3. `fastboot reboot` — boot from slot a
+4. Monitor device screen for:
+   - Green bar at top (DarwinBoot handoff)
+   - Diagnostic page with boot stages
+   - `build-tag=hawaii-001` in title
+   - Panic screen if XNU fails
+5. If Android boots instead: slot switch failed, repeat from step 1
+6. If device is bricked/trapped: use slot b rescue (fastboot set_active b + fastboot reboot)

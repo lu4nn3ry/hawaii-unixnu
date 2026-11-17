@@ -1,0 +1,105 @@
+20010000-20010fff : /soc/clock-controller@20010000
+200a0000-200a00ff : /soc/ap-apb/serial@0x200a0000
+200c0000-200c00ff : /soc/ap-apb/serial@0x200c0000
+200d0000-200d00ff : /soc/ap-apb/i2c@0x200d0000
+200e0000-200e00ff : /soc/ap-apb/i2c@0x200e0000
+200f0000-200f00ff : /soc/ap-apb/i2c@0x200f0000
+20100000-201000ff : /soc/ap-apb/i2c@0x20100000
+20120000-20120fff : /soc/ap-apb/spi@20120000
+20150000-20150fff : /soc/ap-apb/spi@20150000
+201a0000-201a0fff : /soc/ap-apb/sdio@201a0000
+201b0000-201b0fff : /soc/ap-apb/sdio@201b0000
+201d0000-201d0fff : /soc/ap-apb/sdio@201d0000
+201e0000-201effff : /soc/ap-apb/rng@201e0000
+20200000-2020ffff : ufshci_reg
+20210000-202100ff : /soc/ap-apb/i2c@0x20210000
+20220000-202200ff : /soc/ap-apb/i2c@0x20220000
+20410000-20413fff : /soc/ap-ahb/dma-controller@20410000
+23100000-231fffff : 23100000.gpu
+30010000-30010fff : /soc/clock-controller@300100000
+31000000-31001fff : /soc/ap-ahb/gsp@31000000
+32000000-3200bfff : /soc/mm/video-codec@32000000
+36000000-3600bfff : /soc/mm/jpg-codec@36000000
+56401000-56401fff : /soc/agcp/pdm-dmic@56401000
+56480000-56480fff : /soc/agcp/vbc@56480000
+56490000-5649016f : /soc/agcp/mcdt@56490000
+56580000-56583fff : /soc/agcp/dma-controller@56580000
+56750000-56750fff : /soc/agcp/audio-codec@56750000
+60000000-60008fff : /soc/pub/dmc-controller@60000000
+64012000-64012fff : /soc/clock-controller@64012000
+64014000-64017fff : /soc/aon/topdvfsctrl@64014000
+64018000-64018fff : /soc/aon/cpudvfs-dev@64018000
+64100000-6410007f : /soc/aon/gpio@64100000
+64100080-6410009f : /soc/aon/gpio@64100080
+641000a0-641000bf : /soc/aon/gpio@641000a0
+641000c0-641000df : /soc/aon/gpio@641000c0
+64110000-6411007f : /soc/aon/gpio@64100000
+64110080-6411009f : /soc/aon/gpio@64100080
+641100a0-641100bf : /soc/aon/gpio@641000a0
+641100c0-641100df : /soc/aon/gpio@641000c0
+64120000-6412007f : /soc/aon/gpio@64100000
+64120080-6412009f : /soc/aon/gpio@64100080
+641200a0-641200bf : /soc/aon/gpio@641000a0
+641200c0-641200df : /soc/aon/gpio@641000c0
+64130000-6413007f : /soc/aon/gpio@64100000
+64130080-6413009f : /soc/aon/gpio@64100080
+641300a0-641300bf : /soc/aon/gpio@641000a0
+641300c0-641300df : /soc/aon/gpio@641000c0
+64140000-6414007f : /soc/aon/gpio@64100000
+64140080-6414009f : /soc/aon/gpio@64100080
+641400a0-641400bf : /soc/aon/gpio@641000a0
+641400c0-641400df : /soc/aon/gpio@641000c0
+64150000-6415007f : /soc/aon/gpio@64100000
+64150080-6415009f : /soc/aon/gpio@64100080
+641500a0-641500bf : /soc/aon/gpio@641000a0
+641500c0-641500df : /soc/aon/gpio@641000c0
+641b0000-641bffff : /soc/aon/gpio@641b0000
+64200000-642fffff : /soc/aon/spi@64200000
+643d0000-643dffff : /soc/aon/efuse@643d0000
+643f0000-643fffff : /soc/aon/pwm@643f0000
+64470000-6447001f : /soc/aon/timer@64470000
+64470020-6447003f : /soc/aon/timer@64470020
+644b0000-644bffff : /soc/aon/thermal@644B0000
+644d0000-644dffff : /soc/aon/thermal@644D0000
+644e0000-644effff : /soc/aon/watchdog@644e0000
+64710000-6471ffff : /soc/aon/pinctrl@64710000
+64750000-64753fff : /soc/aon/modem-dbg-log@64750000
+64900000-64901fff : /soc/aon/usb@64900000
+  64900000-64901fff : /soc/aon/usb@64900000
+64910000-6491ffff : /soc/aon/hwspinlock@64910000
+65002000-65002fff : /soc/pub/dmc-controller@60000000
+7c002000-7c002fff : /soc/funnel@7c002000
+  7c002000-7c002fff : /soc/funnel@7c002000
+7c003000-7c003fff : /soc/etb@7c003000
+  7c003000-7c003fff : /soc/etb@7c003000
+7e001000-7e001fff : /soc/funnel@7e001000
+  7e001000-7e001fff : /soc/funnel@7e001000
+7e002000-7e002fff : /soc/etf@7e002000
+  7e002000-7e002fff : /soc/etf@7e002000
+7e003000-7e003fff : /soc/etf@7e003000
+  7e003000-7e003fff : /soc/etf@7e003000
+7e004000-7e004fff : /soc/funnel@7e004000
+  7e004000-7e004fff : /soc/funnel@7e004000
+7e005000-7e005fff : /soc/funnel@7e005000
+  7e005000-7e005fff : /soc/funnel@7e005000
+7f040000-7f040fff : /soc/etm@7f040000
+  7f040000-7f040fff : /soc/etm@7f040000
+7f140000-7f140fff : /soc/etm@7f140000
+  7f140000-7f140fff : /soc/etm@7f140000
+7f240000-7f240fff : /soc/etm@7f240000
+  7f240000-7f240fff : /soc/etm@7f240000
+7f340000-7f340fff : /soc/etm@7f340000
+  7f340000-7f340fff : /soc/etm@7f340000
+7f440000-7f440fff : /soc/etm@7f440000
+  7f440000-7f440fff : /soc/etm@7f440000
+7f540000-7f540fff : /soc/etm@7f540000
+  7f540000-7f540fff : /soc/etm@7f540000
+7f640000-7f640fff : /soc/etm@7f640000
+  7f640000-7f640fff : /soc/etm@7f640000
+7f740000-7f740fff : /soc/etm@7f740000
+  7f740000-7f740fff : /soc/etm@7f740000
+80000000-853effff : System RAM
+  80080000-813effff : Kernel code
+  816c0000-81ba8fff : Kernel data
+853f0000-853fffff : namespace0.0
+85400000-17fffefff : System RAM

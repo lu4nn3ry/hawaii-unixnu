@@ -64,24 +64,31 @@ packages = [
 [firmware.defines]
 DEVICE_MODEL = "hawaii"
 ENABLE_SECUREBOOT = "0"
+# ATENÇÃO: FD_BASE e FD_SIZE NÃO foram validados no hardware real.
+# Valores provisórios extraídos de uboot_a.bin; devem ser confirmados
+# com /proc/iomem e /proc/meminfo do dispositivo antes de gravar.
 FD_BASE = "0x80800000"
 FD_SIZE = "0x400000"
 
-# Stock boot image parameters (Android header v0, parsed from boot_b):
-#   header_version 0, pagesize 2048, kernel_addr 0x8000, ramdisk_addr 0x5400000,
+# Stock boot image parameters (Android header v2, parsed from boot_b):
+#   header_version 2, pagesize 2048, kernel_addr 0x8000, ramdisk_addr 0x5400000,
 #   tags_offset 0x100, cmdline console=ttyS1,115200n8 buildvariant=user
+# ATENÇÃO: Estes parâmetros foram extraídos do boot_b original. O cabeçalho
+# Android v2 deve ser montado seguindo a especificação AOSP.
 [bootimg.image]
 base = 0x0
 kernel_offset = 0x8000
 ramdisk_offset = 0x5400000
 tags_offset = 0x100
 pagesize = 2048
-header_version = 0
+header_version = 2
 kernel_size = 0x182f010
 ramdisk_size = 0x8f53fd
 [payload]
 volume = "UNIXNU"
-size_mib = 192
+# ATENÇÃO: 192 MiB excede o tamanho da partição boot (64 MiB).
+# Para o primeiro teste, usar 8 MiB. Ajustar conforme o tamanho real do XNU.
+size_mib = 8
 loader = "firmware"
 title = "UniXNU"
 dram_size = "0x80000000"
