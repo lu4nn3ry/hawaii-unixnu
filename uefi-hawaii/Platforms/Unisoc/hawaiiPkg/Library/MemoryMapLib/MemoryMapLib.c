@@ -43,11 +43,13 @@ gMemoryDescriptor[] = {
   // Vendor reserved regions
   {"DDRBIST",            0x80000000, 0x00001000, AddMem,  MEM_RES, UNCACHEABLE,   Reserv, UNCACHED_UNBUFFERED_XN},
   {"RebootEscrow",       0x81FF0000, 0x00010000, AddMem,  MEM_RES, UNCACHEABLE,   Reserv, UNCACHED_UNBUFFERED_XN},
-  {"Audio Mem",          0x94100000, 0x00300000, AddMem,  MEM_RES, UNCACHEABLE,   Reserv, UNCACHED_UNBUFFERED_XN},
   {"AudioDSP",           0x89000000, 0x00600000, AddMem,  MEM_RES, UNCACHEABLE,   Reserv, UNCACHED_UNBUFFERED_XN},
+  {"Audio Mem",          0x94100000, 0x00300000, AddMem,  MEM_RES, UNCACHEABLE,   Reserv, UNCACHED_UNBUFFERED_XN},
 
-  // Free DRAM for DarwinBoot kernel window
-  {"High RAM",           0x85400000, 0x10000000, AddMem,  SYS_MEM, SYS_MEM_CAP, Conv,   WRITE_BACK_XN},
+  // Free DRAM between vendor carve-outs (non-overlapping with reserved regions)
+  {"Free RAM Low",       0x85400000, 0x03C00000, AddMem,  SYS_MEM, SYS_MEM_CAP, Conv,   WRITE_BACK_XN},
+  {"Free RAM Mid",       0x89600000, 0x0AB00000, AddMem,  SYS_MEM, SYS_MEM_CAP, Conv,   WRITE_BACK_XN},
+  {"Free RAM High",      0x94400000, 0x10000000, AddMem,  SYS_MEM, SYS_MEM_CAP, Conv,   WRITE_BACK_XN},
 
   // Display framebuffer (logobuffer)
   {"Display Reserved",   0x9E000000, 0x00500000, AddMem,  MEM_RES, SYS_MEM_CAP,   Reserv, WRITE_THROUGH_XN},

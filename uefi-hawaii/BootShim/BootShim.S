@@ -41,10 +41,11 @@ _StackSize:
 _Start:
     mov     x4, x1            /* x4 = endereço do payload (FDT ou UEFI) */
 
-    /* Habilita VFP/NEON antes de saltar pro SEC (evita crash em ArmEnableVFP) */
-    mrs     x0, CPACR_EL1
-    orr     x0, x0, #(3 << 20)      /* FPEN = 0b11 (full access) */
-    msr     CPACR_EL1, x0
+    /* Habilita VFP/NEON antes de saltar pro SEC (evita crash em ArmEnableVFP).
+     * Usa x7 para não destruir x0 (endereço do FDT do bootloader). */
+    mrs     x7, CPACR_EL1
+    orr     x7, x7, #(3 << 20)      /* FPEN = 0b11 (full access) */
+    msr     CPACR_EL1, x7
     isb
 
     ldr     x5, =FD_BASE      /* x5 = endereço de destino do UEFI */

@@ -25,8 +25,6 @@
 #define HAWAII_UART_LSR     0x08U
 #define HAWAII_UART_LSR_TX_OVER  (1U << 15)
 
-#define HAWAII_HOLD_TICKS   (5000000ULL)
-
 STATIC
 VOID
 HawaiiPaint (
@@ -39,21 +37,6 @@ HawaiiPaint (
   Pixel = (volatile UINT16 *)(UINTN)HAWAII_FB_BASE;
   for (Index = 0; Index < HAWAII_FB_PIXELS; Index++) {
     Pixel[Index] = Colour;
-  }
-}
-
-STATIC
-VOID
-HawaiiHold (
-  IN UINT64  Ticks
-  )
-{
-  volatile UINT64  Counter;
-  UINT64           Index;
-
-  Counter = 0;
-  for (Index = 0; Index < Ticks; Index++) {
-    Counter++;
   }
 }
 
@@ -87,15 +70,6 @@ PlatformInitialize (
     HawaiiPutc (Banner[Index]);
   }
 
-  HawaiiHold (HAWAII_HOLD_TICKS);
-
-  /* PSCI SYSTEM_RESET - reset device so we can see if C code ran */
-  __asm__ volatile (
-    "mov x0, #0x84000000\n"
-    "mov x1, #0\n"
-    "mov x2, #0\n"
-    "mov x3, #0\n"
-    "smc #0\n"
-    ::: "x0", "x1", "x2", "x3", "memory"
-  );
+  /* No hold, no PSCI reset - let SecMain continue to DXE.
+   * HawaiiBringupDxe will reset at EndOfDxe. */
 }

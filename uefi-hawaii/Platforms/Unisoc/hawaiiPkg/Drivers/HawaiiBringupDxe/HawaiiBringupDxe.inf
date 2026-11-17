@@ -18,8 +18,12 @@
   DebugLib
   SerialPortLib
   UefiBootServicesTableLib
+  UefiRuntimeServicesTableLib
 
 [Protocols]
+
+[Guids]
+  gEfiEndOfDxeEventGroupGuid                     ## CONSUMES
 
 [Depex]
   TRUE

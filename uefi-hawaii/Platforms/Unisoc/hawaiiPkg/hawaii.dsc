@@ -73,7 +73,7 @@
   #
   gSiliciumPkgTokenSpaceGuid.PcdFrameBufferWidth|1600
   gSiliciumPkgTokenSpaceGuid.PcdFrameBufferHeight|720
-  gSiliciumPkgTokenSpaceGuid.PcdFrameBufferColorDepth|32
+  gSiliciumPkgTokenSpaceGuid.PcdFrameBufferColorDepth|16
 
 [PcdsFixedAtBuild]
   #
