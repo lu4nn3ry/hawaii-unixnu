@@ -11,7 +11,12 @@ stage/
 .DS_Store
 __pycache__/
 *.pyc
+*.bin
 local.toml
 .idea/
 .vscode/
 .cache/
+.mali_kroot
+%SystemDrive%/
+.local/
+dts/test*.dts

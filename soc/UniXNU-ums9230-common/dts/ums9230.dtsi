@@ -2,16 +2,13 @@
  * Unisoc UMS9230 / Tiger T606 (qogirl6) shared device tree include.
  *
  * Sources of every value in this file:
- *   - vendor boot_b appended DTB (to be decompiled from /dev/block/by-name/boot_b)
+ *   - vendor ums9230.dtsi (CreitinGameplays/motorola-moto-e32-kernel, branch 7.1)
  *   - hxzbaka/twrp_device_eebbk_ums512_1h190-A2 (UMS512/T610 family reference)
- *   - motorola-moto-e32-root kernel source tree
+ *   - vendor DTB proc_device_tree_root/soc/ (live dump from device)
  *
  * Only the nodes UniXNU needs to build the ADT are described here.  The board
  * DTS includes this file and adds DRAM, reserved-memory and board peripherals.
  */
-
-/dts-v1/;
-
 / {
 	compatible = "sprd,ums9230";
 	#address-cells = <2>;
@@ -28,62 +25,66 @@
 			compatible = "arm,cortex-a55";
 			reg = <0 0x0>;
 			enable-method = "psci";
-			unixnu,cluster-type = "E";
 		};
 		cpu1: cpu@100 {
 			device_type = "cpu";
 			compatible = "arm,cortex-a55";
 			reg = <0 0x100>;
 			enable-method = "psci";
-			unixnu,cluster-type = "E";
 		};
 		cpu2: cpu@200 {
 			device_type = "cpu";
 			compatible = "arm,cortex-a55";
 			reg = <0 0x200>;
 			enable-method = "psci";
-			unixnu,cluster-type = "E";
 		};
 		cpu3: cpu@300 {
 			device_type = "cpu";
 			compatible = "arm,cortex-a55";
 			reg = <0 0x300>;
 			enable-method = "psci";
-			unixnu,cluster-type = "E";
 		};
 		cpu4: cpu@400 {
 			device_type = "cpu";
 			compatible = "arm,cortex-a55";
 			reg = <0 0x400>;
 			enable-method = "psci";
-			unixnu,cluster-type = "E";
 		};
 		cpu5: cpu@500 {
 			device_type = "cpu";
 			compatible = "arm,cortex-a55";
 			reg = <0 0x500>;
 			enable-method = "psci";
-			unixnu,cluster-type = "E";
 		};
 		cpu6: cpu@600 {
 			device_type = "cpu";
 			compatible = "arm,cortex-a75";
 			reg = <0 0x600>;
 			enable-method = "psci";
-			unixnu,cluster-type = "P";
 		};
 		cpu7: cpu@700 {
 			device_type = "cpu";
 			compatible = "arm,cortex-a75";
 			reg = <0 0x700>;
 			enable-method = "psci";
-			unixnu,cluster-type = "P";
 		};
 	};
 
 	psci {
-		compatible = "arm,psci-1.0", "arm,psci-0.2";
+		compatible = "arm,psci-0.2";
 		method = "smc";
+	};
+
+	pmu-a55 {
+		compatible = "arm,cortex-a55-pmu";
+		interrupts = <144 1>, <145 1>, <146 1>, <147 1>, <148 1>, <149 1>;
+		interrupt-affinity = <&cpu0>, <&cpu1>, <&cpu2>, <&cpu3>, <&cpu4>, <&cpu5>;
+	};
+
+	pmu-a75 {
+		compatible = "arm,cortex-a75-pmu";
+		interrupts = <150 1>, <151 1>;
+		interrupt-affinity = <&cpu6>, <&cpu7>;
 	};
 
 	soc {
@@ -92,11 +93,11 @@
 		#size-cells = <2>;
 		ranges;
 
-		gic: interrupt-controller@12000000 {
+		gic: interrupt-controller@10000000 {
 			compatible = "arm,gic-v3";
 			unixnu,adt-name = "intc";
-			reg = <0 0x12000000 0 0x20000>,
-			      <0 0x12040000 0 0x100000>;
+			reg = <0 0x10000000 0 0x20000>,
+			      <0 0x10040000 0 0x100000>;
 			AAPL,phandle = <0x1>;
 			#interrupt-cells = <3>;
 			#address-cells = <0>;
@@ -105,17 +106,41 @@
 			#redistributor-regions = <1>;
 		};
 
+		ap_apb_regs: syscon@20000000 {
+			compatible = "sprd,ums9230-glbregs", "syscon", "simple-mfd";
+			reg = <0 0x20000000 0 0x10000>;
+		};
+
+		clock-controller@20010000 {
+			compatible = "sprd,ums9230-clock";
+			reg = <0 0x20010000 0 0x1000>;
+			status = "disabled";
+		};
+
+		clock-controller@300100000 {
+			compatible = "sprd,ums9230-clock";
+			reg = <0 0x300100000 0 0x1000>;
+			status = "disabled";
+		};
+
+		clock-controller@64012000 {
+			compatible = "sprd,ums9230-clock";
+			reg = <0 0x64012000 0 0x1000>;
+			status = "disabled";
+		};
+
 		timer {
 			compatible = "arm,armv8-timer";
 			unixnu,adt-name = "timer";
-			interrupts = <1 13 4>, <1 14 4>, <1 11 4>, <1 10 4>;
+			interrupts = <0 13 4>, <0 14 4>, <0 11 4>, <0 10 4>;
 			clock-frequency = <26000000>;
+			arm,no-tick-in-suspend;
 		};
 
-		uart1: serial@70100000 {
+		uart1: serial@0x200b0000 {
 			compatible = "sprd,sc9836-uart";
 			unixnu,adt-name = "uart0";
-			reg = <0 0x70100000 0 0x100>;
+			reg = <0 0x200b0000 0 0x100>;
 			interrupts = <0 3 4>;
 			current-speed = <115200>;
 			status = "okay";

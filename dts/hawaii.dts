@@ -1,18 +1,98 @@
 /dts-v1/;
-/include/ "ums9230.dtsi"
 
 / {
-	model = "Motorola Moto E32 (hawaii, ums9230)";
-	compatible = "motorola,hawaii", "sprd,ums9230";
+	model = "Motorola Moto E32 (XT2227-1, hawaii)";
+	compatible = "motorola,hawaii", "sprd,ums9230-4h10", "sprd,ums9230";
+	#address-cells = <2>;
+	#size-cells = <2>;
+	interrupt-parent = <&gic>;
 
-	memory@80000000 {
-		device_type = "memory";
-		reg = <0 0x80000000 0 0x80000000>;
+	aliases {
+		serial0 = &uart0;
+		serial1 = &uart1;
+		serial2 = &uart2;
 	};
 
 	chosen {
-		stdout-path = "/soc/serial@70100000";
+		stdout-path = "serial1:115200n8";
 		bootargs = "console=ttyS1,115200n8";
+	};
+
+	cpus {
+		#address-cells = <2>;
+		#size-cells = <0>;
+		timebase-frequency = <26000000>;
+
+		cpu0: cpu@0 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a55";
+			reg = <0 0x0>;
+			enable-method = "psci";
+		};
+		cpu1: cpu@100 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a55";
+			reg = <0 0x100>;
+			enable-method = "psci";
+		};
+		cpu2: cpu@200 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a55";
+			reg = <0 0x200>;
+			enable-method = "psci";
+		};
+		cpu3: cpu@300 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a55";
+			reg = <0 0x300>;
+			enable-method = "psci";
+		};
+		cpu4: cpu@400 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a55";
+			reg = <0 0x400>;
+			enable-method = "psci";
+		};
+		cpu5: cpu@500 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a55";
+			reg = <0 0x500>;
+			enable-method = "psci";
+		};
+		cpu6: cpu@600 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a75";
+			reg = <0 0x600>;
+			enable-method = "psci";
+		};
+		cpu7: cpu@700 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a75";
+			reg = <0 0x700>;
+			enable-method = "psci";
+		};
+	};
+
+	psci {
+		compatible = "arm,psci-0.2";
+		method = "smc";
+	};
+
+	pmu-a55 {
+		compatible = "arm,cortex-a55-pmu";
+		interrupts = <144 1>, <145 1>, <146 1>, <147 1>, <148 1>, <149 1>;
+		interrupt-affinity = <&cpu0>, <&cpu1>, <&cpu2>, <&cpu3>, <&cpu4>, <&cpu5>;
+	};
+
+	pmu-a75 {
+		compatible = "arm,cortex-a75-pmu";
+		interrupts = <150 1>, <151 1>;
+		interrupt-affinity = <&cpu6>, <&cpu7>;
+	};
+
+	memory@80000000 {
+		device_type = "memory";
+		reg = <0x0 0x80000000 0x1 0x0>;
 	};
 
 	reserved-memory {
@@ -20,9 +100,17 @@
 		#size-cells = <2>;
 		ranges;
 
-		ramoops: ramoops@fff80000 {
+		wcn-mem@0x87000000 {
+			reg = <0x0 0x87000000 0x0 0x1a0000>;
+		};
+
+		logobuffer@0x9e000000 {
+			reg = <0x0 0x9e000000 0x0 0xab0000>;
+		};
+
+		ramoops: ramoops@0xfff80000 {
 			compatible = "ramoops";
-			reg = <0 0xfff80000 0 0x40000>;
+			reg = <0x0 0xfff80000 0x0 0x40000>;
 			record-size = <0x8000>;
 			console-size = <0x8000>;
 			pmsg-size = <0x8000>;
@@ -30,12 +118,306 @@
 	};
 
 	soc {
-		sdhci: mmc@71400000 {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+		compatible = "simple-bus";
+		interrupt-parent = <&gic>;
+
+		gic: interrupt-controller@10000000 {
+			compatible = "arm,gic-v3";
+			reg = <0x0 0x10000000 0x0 0x10000>, <0x0 0x10040000 0x0 0x200000>;
+			interrupt-controller;
+			#interrupt-cells = <3>;
+		};
+
+		timer {
+			compatible = "arm,armv8-timer";
+			interrupts = <0 13 4>, <0 14 4>, <0 11 4>, <0 10 4>;
+			clock-frequency = <26000000>;
+			arm,no-tick-in-suspend;
+		};
+
+		sdhci: mmc@0x201a0000 {
 			compatible = "unixnu,sdhci-block", "sprd,sdhc-r11p1";
 			unixnu,adt-name = "sdhci";
-			reg = <0 0x71400000 0 0x1000>;
+			reg = <0x0 0x201a0000 0x0 0x1000>;
 			interrupts = <0 10 4>;
 			status = "okay";
+		};
+
+		sdhci1: mmc@0x201b0000 {
+			compatible = "unixnu,sdhci-block", "sprd,sdhc-r11p1";
+			unixnu,adt-name = "sdhci1";
+			reg = <0x0 0x201b0000 0x0 0x1000>;
+			interrupts = <0 11 4>;
+			status = "disabled";
+		};
+
+		sdhci2: mmc@0x201c0000 {
+			compatible = "unixnu,sdhci-block", "sprd,sdhc-r11p1";
+			unixnu,adt-name = "sdhci2";
+			reg = <0x0 0x201c0000 0x0 0x1000>;
+			interrupts = <0 12 4>;
+			status = "disabled";
+		};
+
+		sdhci3: mmc@0x201d0000 {
+			compatible = "unixnu,sdhci-block", "sprd,sdhc-r11p1";
+			unixnu,adt-name = "sdhci3";
+			reg = <0x0 0x201d0000 0x0 0x1000>;
+			interrupts = <0 13 4>;
+			status = "okay";
+		};
+
+		ufs: ufs@0x20200000 {
+			compatible = "sprd,ufshc";
+			reg = <0x0 0x20200000 0x0 0x10000>;
+			status = "disabled";
+		};
+
+		uart0: serial@0x200a0000 {
+			compatible = "sprd,ums9230-uart", "sprd,sc9836-uart";
+			reg = <0x0 0x200a0000 0x0 0x100>;
+			status = "disabled";
+		};
+
+		uart1: serial@0x200b0000 {
+			compatible = "sprd,ums9230-uart", "sprd,sc9836-uart";
+			reg = <0x0 0x200b0000 0x0 0x100>;
+			status = "okay";
+			unixnu,adt-name = "uart1";
+		};
+
+		uart2: serial@0x200c0000 {
+			compatible = "sprd,ums9230-uart", "sprd,sc9836-uart";
+			reg = <0x0 0x200c0000 0x0 0x100>;
+			status = "disabled";
+		};
+
+		gpu: gpu@0x23100000 {
+			compatible = "sprd,mali-natt";
+			reg = <0x0 0x23100000 0x0 0x10000>;
+			status = "disabled";
+			unixnu,adt-name = "gpu";
+		};
+
+		display-subsystem {
+			compatible = "sprd,display-subsystem";
+			#address-cells = <2>;
+			#size-cells = <2>;
+			ranges;
+			status = "okay";
+
+			dpu: dpu@0x31000000 {
+				compatible = "sprd,display-processor";
+				unixnu,adt-name = "dpu";
+				reg = <0x0 0x31000000 0x0 0x10000>;
+				status = "okay";
+			};
+
+			dsi: dsi@0x31100000 {
+				compatible = "sprd,dsi-host";
+				unixnu,adt-name = "dsi";
+				reg = <0x0 0x31100000 0x0 0x1000>;
+				status = "okay";
+			};
+		};
+
+		i2c3: i2c@0x200d0000 {
+			compatible = "sprd,qogirl6-i2c";
+			reg = <0x0 0x200d0000 0x0 0x1000>;
+			interrupts = <0 10 4>;
+			status = "okay";
+			#address-cells = <1>;
+			#size-cells = <0>;
+		};
+
+		i2c4: i2c@0x200e0000 {
+			compatible = "sprd,qogirl6-i2c";
+			reg = <0x0 0x200e0000 0x0 0x1000>;
+			interrupts = <0 11 4>;
+			status = "okay";
+			#address-cells = <1>;
+			#size-cells = <0>;
+		};
+
+		i2c5: i2c@0x200f0000 {
+			compatible = "sprd,qogirl6-i2c";
+			reg = <0x0 0x200f0000 0x0 0x1000>;
+			interrupts = <0 12 4>;
+			status = "okay";
+			#address-cells = <1>;
+			#size-cells = <0>;
+		};
+
+		i2c6: i2c@0x20100000 {
+			compatible = "sprd,qogirl6-i2c";
+			reg = <0x0 0x20100000 0x0 0x1000>;
+			interrupts = <0 13 4>;
+			status = "okay";
+			#address-cells = <1>;
+			#size-cells = <0>;
+		};
+
+		i2c7: i2c@0x20110000 {
+			compatible = "sprd,qogirl6-i2c";
+			reg = <0x0 0x20110000 0x0 0x1000>;
+			interrupts = <0 14 4>;
+			status = "disabled";
+			#address-cells = <1>;
+			#size-cells = <0>;
+		};
+
+		i2c8: i2c@0x20210000 {
+			compatible = "sprd,qogirl6-i2c";
+			reg = <0x0 0x20210000 0x0 0x1000>;
+			interrupts = <0 15 4>;
+			status = "okay";
+			#address-cells = <1>;
+			#size-cells = <0>;
+		};
+
+		i2c9: i2c@0x20220000 {
+			compatible = "sprd,qogirl6-i2c";
+			reg = <0x0 0x20220000 0x0 0x1000>;
+			interrupts = <0 16 4>;
+			status = "okay";
+			#address-cells = <1>;
+			#size-cells = <0>;
+		};
+
+		pinctrl: pinctrl@0x64710000 {
+			compatible = "sprd,pinctrl";
+			reg = <0x0 0x64710000 0x0 0x10000>;
+			status = "okay";
+			unixnu,adt-name = "pinctrl";
+		};
+
+		ap_gpio: gpio@0x641b0000 {
+			compatible = "sprd,qogirl6-gpio";
+			reg = <0x0 0x641b0000 0x0 0x10000>;
+			status = "okay";
+			#gpio-cells = <2>;
+		};
+
+		eic_async: eic@0x641000a0 {
+			compatible = "sprd,qogirl6-eic-async";
+			reg = <0x0 0x641000a0 0x0 0x1000>;
+			status = "okay";
+			interrupt-controller;
+			#interrupt-cells = <2>;
+		};
+
+		timer@0x64450000 {
+			compatible = "sprd,ums9230-timer";
+			reg = <0x0 0x64450000 0x0 0x10>;
+			status = "okay";
+		};
+
+		wcn: wcn@0 {
+			compatible = "sprd,sc2355-wifi";
+			unixnu,adt-name = "wcn";
+			status = "disabled";
+		};
+
+		/* PMIC sub-devices - from vendor sc2730.dtsi */
+		pmic_wdt: watchdog@0x40 {
+			compatible = "sprd,sc2730-wdt", "sprd,sc27xx-wdt";
+			reg = <0x0 0x40 0x0 0x4>;
+			status = "disabled";
+		};
+
+		pmic_adc: adc@0x504 {
+			compatible = "sprd,sc2730-adc";
+			reg = <0x0 0x504 0x0 0x4>;
+			status = "disabled";
+		};
+
+		pmic_fgu: fgu@0xc00 {
+			compatible = "sprd,sc2730-fgu";
+			reg = <0x0 0xc00 0x0 0x4>;
+			status = "disabled";
+		};
+
+		pmic_fchg: fchg@0x400 {
+			compatible = "sprd,sc2730-fast-charger";
+			reg = <0x0 0x400 0x0 0x4>;
+			status = "disabled";
+		};
+
+		pmic_typec: typec@0x380 {
+			compatible = "sprd,sc2730-typec";
+			reg = <0x0 0x380 0x0 0x4>;
+			status = "disabled";
+		};
+
+		power-controller@0x1800 {
+			compatible = "sprd,sc2730-regulator", "sprd,sc2731-regulator";
+			reg = <0x0 0x1800 0x0 0x4>, <0x0 0x1ba0 0x0 0x4>, <0x0 0x1b98 0x0 0x4>;
+			status = "disabled";
+
+			vddcpu: dcdc-cpu0 {
+				regulator-name = "vddcpu";
+				regulator-min-microvolt = <200000>;
+				regulator-max-microvolt = <1596875>;
+				regulator-ramp-delay = <25000>;
+				regulator-always-on;
+			};
+
+			vddgpu: dcdc-gpu0 {
+				regulator-name = "vddgpu";
+				regulator-min-microvolt = <200000>;
+				regulator-max-microvolt = <1596875>;
+				regulator-ramp-delay = <25000>;
+				regulator-always-on;
+			};
+
+			vddcore: dcdc-core0 {
+				regulator-name = "vddcore";
+				regulator-min-microvolt = <200000>;
+				regulator-max-microvolt = <1596875>;
+				regulator-ramp-delay = <25000>;
+				regulator-always-on;
+			};
+
+			vddmem: dcdc-mem0 {
+				regulator-name = "vddmem";
+				regulator-min-microvolt = <400000>;
+				regulator-max-microvolt = <1593750>;
+				regulator-ramp-delay = <25000>;
+				regulator-always-on;
+			};
+
+			vddgen0: dcdc-gen0 {
+				regulator-name = "vddgen0";
+				regulator-min-microvolt = <1220000>;
+				regulator-max-microvolt = <2410625>;
+				regulator-ramp-delay = <25000>;
+				regulator-always-on;
+			};
+
+			vddgen1: dcdc-gen1 {
+				regulator-name = "vddgen1";
+				regulator-min-microvolt = <850000>;
+				regulator-max-microvolt = <1643750>;
+				regulator-ramp-delay = <25000>;
+				regulator-always-on;
+			};
+		};
+
+		charger-manager {
+			compatible = "charger-manager";
+			cm-charge-pumps = "bq2597x-standalone";
+			cm-fast-chargers = "sc2730_fast_charger";
+			cm-fuel-gauge = "sc27xx-fgu";
+			status = "disabled";
+		};
+
+		battery: battery {
+			compatible = "simple-battery";
+			unixnu,adt-name = "battery";
+			status = "disabled";
 		};
 	};
 };

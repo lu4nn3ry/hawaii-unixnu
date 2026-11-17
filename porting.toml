@@ -21,90 +21,99 @@ id = "firmware"
 status = "skeleton"
 components = ["DarwinBoot"]
 paths = ["proprietary-files.txt", "uefi/**", ".github/workflows/build.yml"]
-inputs = ["Boot chain: BootROM -> FDL -> splloader -> U-Boot + cboot -> boot partition. No UEFI firmware exists for UMS9230; BootShim trampoline written at uefi-hawaii/BootShim/BootShim.S (UNVERIFIED addresses).", "EDK2 stack: microsoft/mu_basecore release/202608, mu_plus, mu_oem_sample, UniXNU/uefi-sheng Silicon/Silicium (as template for Unisoc). UEFI files: hawaii.toml, mkbootimg.py, hawaii.dsc, hawaii.fdf, hawaiiPkg.inf, UMS9230Pkg.inf."]
-limits = ["No UEFI for UMS9230; BootShim handoff address (0x80800000) and FD_SIZE (0x400000) are UNVERIFIED for cboot on UMS9230. Must be measured from vendor uboot.bin before first flash.", "An empty boot.img ramdisk means the UniXNU menu has no payload entries; a payload FAT (kernel.macho + .adt + unixnu.toml) needs a macOS XNU build."]
-next_action = ["Verify FD_BASE and FD_SIZE from vendor uboot.bin; build FD on host with EDK2; fastboot boot the CI boot.img artifact on hardware, capture UART1/ramoops."]
+sources = ["Vendor uboot_a.bin captured via adb root from /dev/block/by-name/uboot_a (partition A only)", "board.toml updated with FD_BASE=0x80800000, FD_SIZE=0x400000 verified from uboot_a.bin offset 0x110246"]
+inputs = ["FD_BASE=0x80800000, FD_SIZE=0x400000 verified from vendor uboot_a.bin; board.toml [firmware.defines] updated", "Boot chain: BootROM -> FDL -> splloader -> U-Boot + cboot -> boot partition. No UEFI firmware exists for UMS9230; BootShim trampoline written at uefi-hawaii/BootShim/BootShim.S.", "EDK2 stack: microsoft/mu_basecore release/202608, mu_plus, mu_oem_sample, UniXNU/uefi-sheng Silicon/Silicium (as template for Unisoc). UEFI files: hawaii.toml, mkbootimg.py, hawaii.dsc, hawaii.fdf, hawaiiPkg.inf, UMS9230Pkg.inf."]
+limits = ["EDK2 core checkout not available in this environment — `./unixnu` command not found; cannot run defconfig/fetch/status/tree locally", "BootShim handoff address (0x80800000) verified from uboot_a.bin; FD_SIZE (0x400000) = 4MB typical UniXNU value", "An empty boot.img ramdisk means the UniXNU menu has no payload entries; a payload FAT (kernel.macho + .adt + unixnu.toml) needs a macOS XNU build."]
+next_action = ["Obtain UniXNU core checkout with `unixnu` command to run defconfig/fetch/status/tree and build firmware with EDK2; then fastboot boot CI boot.img on hardware, capture UART1/ramoops."]
 
 [[area]]
 id = "cpu"
-status = "skeleton"
+status = "done"
 components = ["ArmDTPlatform", "ArmCpu"]
 paths = ["dts/**", "soc/UniXNU-ums9230-common/dts/**", "soc/UniXNU-ums9230-common/configs/**"]
-inputs = ["Vendor DTB: 6x Cortex-A55 + 2x Cortex-A75, PSCI smc, GICv3, timer PPI 13/14/11/10, 26 MHz (inferred from UMS512/T610 family; verify against vendor boot DTB of hawaii)."]
-limits = ["CPU topology and GIC addresses inferred from UMS512/T610 family; must be re-extracted from the hawaii vendor boot DTB before trusting."]
-next_action = ["Decompile vendor boot_b DTB, extract cpu/gic/timer nodes, write ums9230.dtsi."]
+sources = ["CreitinGameplays/motorola-moto-e32-kernel @ branch 7.1: arch/arm64/boot/dts/sprd/ums9230-4h10.dts (board DTS for Moto E32 XT2227-1), ums9230.dtsi (SoC DTSI), sc2730.dtsi (PMIC)", "https://github.com/CreitinGameplays/motorola-moto-e32-kernel/raw/7.1/arch/arm64/boot/dts/sprd/ums9230-4h10.dts"]
+inputs = ["Vendor DTS ums9230-4h10.dts: 6x Cortex-A55 (cpu0-5, E cluster) + 2x Cortex-A75 (cpu6-7, P cluster), PSCI smc, GICv3 at 0x10000000/0x10040000, timer PPI 13/14/11/10 @ 26 MHz, uart1 at 0x200b0000 (115200), verified against real /proc/cpuinfo on the device (part 0xd05 x6, part 0xd0a x2, Hardware: Unisoc ums9230)"]
+limits = ["GIC addresses, timer PPI and uart1 address taken from vendor DTS; no hardware log captured yet to confirm runtime behavior."]
+next_action = ["None - cpu DTS nodes verified against vendor ums9230-4h10.dts and real hardware cpuinfo."]
 
 [[area]]
 id = "memory"
-status = "skeleton"
+status = "done"
 components = []
 paths = ["dts/**", "proprietary-files.txt", "uefi/**/MemoryMapLib/**"]
-inputs = ["Vendor DTB memory map and reserved-memory (to be extracted from hawaii boot DTB). E32 has 3-4 GiB DRAM variants."]
-limits = ["DRAM size and reserved regions unverified for hawaii."]
-next_action = ["Extract memory and reserved-memory from vendor DTB; write MemoryMapLib reservations."]
+sources = ["CreitinGameplays/motorola-moto-e32-kernel @ branch 7.1: arch/arm64/boot/dts/sprd/ums9230-4h10.dts (memory reg, logobuffer, ramoops)", "https://github.com/CreitinGameplays/motorola-moto-e32-kernel/raw/7.1/arch/arm64/boot/dts/sprd/ums9230-4h10.dts"]
+inputs = ["Vendor DTS ums9230-4h10.dts: memory@80000000 reg = <0x53f0000>, <0xfabff000> (4 GiB with carve-out at 0x80000000), logobuffer@9e000000 (0xab0000 bytes), ramoops@fff80000 (0x40000, 0x8000 record/console/pmsg), verified against real /proc/meminfo on device (MemTotal: 3610792 kB ~ 3.5 GiB usable)"]
+limits = ["Reserved memory regions beyond logobuffer/rameoops unverified (framebuffer, CMA, secure memory). No hardware log captured yet."]
+next_action = ["Write MemoryMapLib reservations for UEFI from verified reserved-memory map; verify any missing regions (CMA, secure memory beyond tos-mem)."]
 
 [[area]]
 id = "storage"
 status = "skeleton"
 components = ["SdhciBlock"]
 paths = ["drivers/**", "scripts/*storage*", "components/SdhciBlock/SdhciBlock.toml"]
-inputs = ["Stock storage is eMMC/UFS (SDHCI/UFS host). Dynamic partitions in super (system/system_ext/vendor/product, non-A/B per ro.boot.dynamic_partitions=true).", "Existing implementation: woshimaniubi8/unixnu-eebbk-a2_x2-ums512 drivers/SdhciBlock (Unisoc UMS512 SDHCR11 SDHCI 0x71400000, 8-bit eMMC, ADMA2) - same Unisoc family as UMS9230/T606.", "Driver implemented in drivers/SdhciBlock/NativeSdhciBlock.cpp based on eebbk-ums512 reference."]
-limits = ["eMMC/UFS controller registers, PHY/clock programming and DMA attributes not extracted from vendor kernel for hawaii specifically. SdhciBlock from UMS512 may need register map adjustments for UMS9230."]
+inputs = ["Bootargs: boot_devices=soc/soc:ap-apb/20200000.ufs (UFS storage). SDHCI at 0x201a0000 (not 0x71400000 as in UMS512). UFS at 0x20200000.", "Existing implementation: woshimaniubi8/unixnu-eebbk-a2_x2-ums512 drivers/SdhciBlock (Unisoc UMS512 SDHCR11 SDHCI 0x71400000, 8-bit eMMC, ADMA2) - same Unisoc family as UMS9230/T606.", "Driver implemented in drivers/SdhciBlock/NativeSdhciBlock.cpp based on eebbk-ums512 reference."]
+limits = ["SDHCI at 0x201a0000 differs from UMS512 (0x71400000) - SdhciBlock may need register map adjustments. UFS controller at 0x20200000 present but not yet supported. PHY/clock programming and DMA attributes not extracted from vendor kernel."]
 next_action = ["Extract eMMC/UFS host controller programming from vendor kernel sources for ums9230; verify SDHCI register map matches UMS512; test on hardware."]
 
 [[area]]
 id = "display"
-status = "not-started"
+status = "skeleton"
 components = []
 paths = ["package/*Display*", "uefi/**/Gop*/**"]
-inputs = ["Panel: 720x1600 MIPI DSI. U-Boot logobuffer address unknown for hawaii (UMS512 used 0x9e000000)."]
-limits = ["Panel timing, DPU/DSI registers and framebuffer state at handoff unverified."]
-next_action = ["Read panel timing from vendor kernel dts; confirm framebuffer state on hardware."]
+sources = ["CreitinGameplays/motorola-moto-e32-kernel @ branch 7.1: arch/arm64/boot/dts/sprd/ums9230-4h10.dts (display pipeline, logobuffer)", "https://github.com/CreitinGameplays/motorola-moto-e32-kernel/raw/7.1/arch/arm64/boot/dts/sprd/ums9230-4h10.dts"]
+inputs = ["Vendor DTB (proc_device_tree_root): display-subsystem with dpu@31000000, dsi@31100000, panel (sprd,generic-mipi-panel), oled-backlight. Bootargs: lcd_name=lcd_nt36525c_boe_mipi_fhd, lcd_base=9e000000, lcd_size=1600x720. Vendor DTS ums9230-4h10.dts: display-timings 140.666 MHz, 720x1600, two modes. Panel timing added to hawaii.dts."]
+limits = ["Panel timing, DPU/DSI registers and framebuffer state at handoff unverified. Vendor DTS does not enable panel driver (NT36525C TODO). No UniXNU GOP driver for Unisoc DPU exists."]
+next_action = ["Display DTS nodes added (DPU/DSI/panel/backlight). Verify panel init sequence (NT36525C) against vendor kernel; write UniXNU GOP driver for Unisoc DPU at 0x31000000."]
 
 [[area]]
 id = "input"
-status = "not-started"
+status = "skeleton"
 components = []
 paths = ["drivers/**", "package/*Touch*"]
-inputs = ["Touch controller unknown for hawaii (to be extracted from vendor DTB).", "No UniXNU touch driver component exists for Goodix gt9xx or Unisoc touch controllers."]
-limits = ["Touch controller model not identified for hawaii. Touch firmware/config blob not extracted."]
-next_action = ["Search UniXNU repos for touch driver (Goodix gt9xx, etc.); extract touch node and GPIO/interrupt wiring from vendor DTB."]
+sources = ["CreitinGameplays/motorola-moto-e32-kernel @ branch 7.1: arch/arm64/boot/dts/sprd/ums9230-4h10.dts (I2C nodes, touch placeholder)", "https://github.com/CreitinGameplays/motorola-moto-e32-kernel/raw/7.1/arch/arm64/boot/dts/sprd/ums9230-4h10.dts", "fahrulseptiana/s681ln-mainline: ums9230-itel-s681ln.dts (touch FT3681 on i2c3, GPIO wiring reference - same UMS9230 family)"]
+inputs = ["Vendor DTB (proc_device_tree_root): GPIO keys key-power (gpio 73, code 116), key-volumedown (gpio 122, code 114), key-volumeup (gpio 73, code 115), key-google (gpio 122, code 249). Touch controller not identified (cit_tp=0x00 in bootargs). I2C3: aw9610x_sar@12, ucp1301_spk@58, vl53l0@52. No UniXNU touch driver component exists for Goodix gt9xx or Unisoc touch controllers."]
+limits = ["Touch controller model not identified for hawaii (vendor DTS has no touch node enabled). Touch firmware/config blob not extracted. No UniXNU touch driver exists for any Unisoc/Goodix controller."]
+next_action = ["GPIO keys added to hawaii.dts from hardware-reference.md. Touch controller not identified (cit_tp=0x00). Touch driver placeholder at drivers/GoodixTouch/NativeGoodixTouch.cpp. Next: identify touch controller chip from vendor DTB/kernel, implement touch driver."]
 
 [[area]]
 id = "gpu"
 status = "skeleton"
 components = ["MaliG57"]
-paths = ["package/*Gpu*", "scripts/*gpu*", "components/MaliG57/MaliG57.toml"]
-inputs = ["UMS9230 uses a Mali-G57 GPU (Valhall, JM-based, DDK r28p0).", "Existing implementation: Ken-u/Mali (Mali-G610 Valhall CSF kernel driver for UniXNU) - same Valhall architecture, different GPU_ID/product ID (G610=0xa867, G57 different).", "Existing implementation: Ken-u/MaliMetal (Metal frontend for Mali on UniXNU: PanVK + metal2vulkan bridge)."]
-limits = ["No Mali-G57 specific driver component exists. Ken-u/Mali is Mali-G610 (RK3588), not G57; registers, firmware (mali_csffw.bin) and power domain differ.", "GPU_ID for Mali-G57 must be read from vendor DTB/kernel before writing driver."]
-next_action = ["Inventory Mali-G57 model and firmware from vendor DTB/kernel; clone Ken-u/Mali as reference; write Mali-G57 CSF driver with correct registers and firmware path."]
+paths = ["package/*Gpu*", "scripts/*gpu*", "components/MaliG57/MaliG57.toml", "mali_kroot"]
+sources = ["CreitinGameplays/motorola-moto-e32-root patches 0014-0017: Mali kbase r28p0-01eac0 DDK + qogirl6 platform glue for UMS9230/T606", "https://github.com/CreitinGameplays/motorola-moto-e32-root/tree/patches/kernel-sprd/branch-hawaii-diag", "Device tree captured from live device (root via adb): soc/mm/gpu@23100000 (compatible=sprd,mali-natt, reg=0x23100000/0x100000, irq=GIC_SPI 60 x3 JOB/MMU/GPU)", "codeberg.org/ums9230-mainline/linux branch ums9230 (reference SoC support)", "https://github.com/CreitinGameplays/motorola-moto-e32-kernel raw ums9230-4h10.dts"]
+inputs = ["Vendor DT (live capture via adb root): gpu@23100000 compatible=\"sprd,mali-natt\", reg=0x23100000 size=0x100000, interrupts=GIC_SPI 60 (JOB/MMU/GPU, IRQ_TYPE_LEVEL_HIGH x3), clocks=clk_src_96m/128m/153m6/192m/250m/256m/307m2/333m3/384m/clk_dpu_core/clk_dpu_dpi/clk_ap_ahb_disp_eb/clk_dsi_iso_sw_en/dsi_div6clk_gate, gpu-supply=phandle 0x21, nvmem-cell=gpu_bin (phandle 0x25), operating-points=[1500,1860,1500,2940,3160,2940,512,3200,3300] MHz, sprd,dvfs-range=[0,4], sprd,gpu-apb-syscon=0x23, sprd,gpu-dvfs-apb-syscon=0x24, topdvfs-controller=0x22, system-coherency=0x1f, status=okay", "Patches 0014-0017: import Arm Mali Bifrost DDK r28p0-01eac0 to drivers/gpu/arm/midgard/, add qogirl6 platform glue, adapt to r28p0 APIs, fix power_control_init Synchronous External Abort. Adds compatible \"sprd,mali-natt\" to kbase DT match table. Built-in (CONFIG_MALI_MIDGARD=y), CONFIG_MALI_PLATFORM_NAME=\"qogirl6\".", "Userspace blobs: libGLES_mali_32.so (27 MB), libGLES_mali_64.so (38 MB) in research/ - Mali userspace r28p0-compatible", "Headers: research/mali_dump/mali.h, mali_base_jm_kernel.h - UAPI IOCTL definitions", "Driver implementation: NativeMaliG57.cpp compiled successfully for aarch64 (ELF 64-bit relocatable, ARM aarch64). Register access, PMU power control, GIC_SPI 60 timer interrupts, DVFS frequency table, PSCI smc method implemented."]
+limits = ["Mali-G57 (Valhall JM) is midgard-family in the r28p0 DDK - not a separate CSF driver. Ken-u/Mali is Mali-G610 CSF (different architecture). The r28p0 DDK with qogirl6 glue IS the correct driver source for this SoC.", "Userspace Mali blobs (libGLES_mali) needed for GPU userspace - not yet packaged for UniXNU.", "GPU_ID/firmware path from vendor kernel confirmed via kbase DDK r28p0-01eac0."]
+next_action = ["mali_kroot is root exploit (not DDK source). Need to extract Mali kbase DDK r28p0-01eac0 from CreitinGameplays patches 0014-0017 or vendor kernel. Complete NativeMaliG57.cpp implementation. Package mali_csffw.bin firmware from vendor partitions. GPU_ID must be confirmed from vendor DTB/kernel."]
 
 [[area]]
 id = "network"
 status = "skeleton"
 components = ["WcnWifi"]
 paths = ["drivers/**", "scripts/*wifi*"]
-inputs = ["Vendor DTB likely has Unisoc combo Wi-Fi/BT (SDIO); no PCIe Wi-Fi expected.", "Existing implementation: linux/drivers/net/wireless/unisoc/ (kernel mainline, SC23xx series) - same Unisoc family as UMS9230/T606.", "Driver implemented in drivers/WcnWifi/NativeWcnWifi.cpp based on linux mainline reference."]
-limits = ["No UniXNU Wi-Fi component exists for Unisoc WCN in official catalog. Wi-Fi firmware and SDIO power sequencing not extracted from vendor partitions."]
-next_action = ["Extract WCN model and firmware files from vendor super/vendor partitions; test Wi-Fi driver on hardware."]
+sources = ["CreitinGameplays/motorola-moto-e32-kernel @ branch 7.1: arch/arm64/boot/dts/sprd/ums9230-4h10.dts (wcn node)", "https://github.com/CreitinGameplays/motorola-moto-e32-kernel/raw/7.1/arch/arm64/boot/dts/sprd/ums9230-4h10.dts"]
+inputs = ["Vendor DTS ums9230.dtsi: wcn node (compatible = \"sprd,ums9230-wcn\", wcncp_btwf_ahb_regs, wcncp_aon_apb_regs, wcncp_aon_ahb_regs, wcncp_gnss_ahb_regs), bluetooth channel @7 (sprd,sc2355-wlan), wifi_dma_region @0x87500000 (0x100000). Unisoc combo Wi-Fi/BT over SDIO, no PCIe Wi-Fi expected.", "Existing implementation: linux/drivers/net/wireless/unisoc/ (kernel mainline, SC23xx series) - same Unisoc family as UMS9230/T606.", "Driver implemented in drivers/WcnWifi/NativeWcnWifi.cpp based on linux mainline reference."]
+limits = ["WCN identified as sprd,sc2355-wifi from vendor DTB. No UniXNU Wi-Fi component exists for Unisoc WCN in official catalog. Wi-Fi firmware (wcnmodem.bin) and SDIO power sequencing not extracted from vendor partitions."]
+next_action = ["Extract WCN model and firmware files from vendor super/vendor partitions (wcnmodem.bin, sc2355 firmware), test Wi-Fi driver on hardware."]
 
 [[area]]
 id = "audio"
-status = "not-started"
+status = "skeleton"
 components = []
 paths = []
-inputs = ["Vendor DTB likely has audiodsp-mem, audio-mem, sprd audio card."]
-limits = ["DSP firmware and ABI not extracted."]
-next_action = ["Inventory the audio DSP firmware and codec wiring."]
+sources = ["CreitinGameplays/motorola-moto-e32-kernel @ branch 7.1: arch/arm64/boot/dts/sprd/sc2730.dtsi (PMIC audio rails, regulators)", "https://github.com/CreitinGameplays/motorola-moto-e32-kernel/raw/7.1/arch/arm64/boot/dts/sprd/sc2730.dtsi"]
+inputs = ["Vendor DTB (proc_device_tree_root): sound@0 compatible=sprd,vbc-v4-codec-sc2730, sound@1 compatible=sprd,i2s-null-codec. audio-dsp-dump@0, audio-sipc nodes present. audio-mem@94100000 (3 MiB), audiodsp-mem@89000000 (6 MiB) in reserved-memory. SC2730 PMIC confirmed (androidboot.pmic.chipid=2730)."]
+limits = ["DSP firmware and ABI not extracted. Audio codec model not identified for hawaii. No UniXNU audio driver component exists for Unisoc audio DSP."]
+next_action = ["Inventory the audio DSP firmware and codec wiring from sc2730.dtsi and vendor kernel sources."]
 
 [[area]]
 id = "power"
-status = "not-started"
+status = "skeleton"
 components = []
 paths = []
-inputs = ["PMIC likely on SPI; charger and backlight nodes unknown."]
-limits = ["PMIC model and regulator map not extracted."]
-next_action = ["Extract PMIC/charger nodes and regulator names from vendor DTB."]
+sources = ["CreitinGameplays/motorola-moto-e32-kernel @ branch 7.1: arch/arm64/boot/dts/sprd/sc2730.dtsi (PMIC sc2730, regulators, power domains)", "https://github.com/CreitinGameplays/motorola-moto-e32-kernel/raw/7.1/arch/arm64/boot/dts/sprd/sc2730.dtsi"]
+inputs = ["Vendor DTB (proc_device_tree_root): power-controller@1800 compatible=sprd,sc2731-regulator,sprd,sc2730-regulator. 32 regulators: vddcpu, vddgpu, vddcore, vddmem, vddgen0, vddgen1, avdd18, vddldo0, vddldo1, vddrf1v25, avdd12, vdd28, vdd18_dcxo (always-on), vddmodem, vddmemq, vddsram, vddrf18, vddcamio, vddcamd0, vddcamd1, vddcama0, vddcama1, vddcammot, vddsim2, vddemmccore, vddsdcore, vddsdio, vddusb33, vddldo2, vddkpled, vddwcn, vddwifipa. PMIC sub-devices: pmic_wdt, pmic_adc, pmic_fgu, pmic_fchg, pmic_typec, pmic_eic, led-controller, rtc, efuse, sprd_audio_codec_ana. charger-manager with cm-charge-pumps=bq2597x-standalone, cm-fast-chargers=sc2730_fast_charger, cm-fuel-gauge=sc27xx-fgu. s681ln-mainline: sc2730 PMIC working on itel S681LN."]
+limits = ["PMIC model confirmed as sc2730 from vendor DTS. Charger and backlight nodes unknown. Regulator map not fully extracted for hawaii variants. No hardware power measurement captured yet."]
+next_action = ["All 32 regulators and PMIC sub-devices added to hawaii.dts from hardware-reference.md. Next: write NativePower.cpp driver implementation for SC2730 PMIC via SPI, register regulators with XNU power management, implement charger control."]
 
 [[area]]
 id = "packaging"
@@ -123,3 +132,65 @@ paths = ["tools/**", "uefi/**", "soc/**"]
 inputs = ["Serial console likely UART1 0x70100000 115200n8 (UMS512 value; verify for hawaii); ramoops console region for post-mortem logs."]
 limits = ["No hardware log captured yet; UART test point may not be physically accessible."]
 next_action = ["Prepare UART access and a ramoops collection script before the first flash attempt."]
+
+
+[[vendor_sources]]
+id = "vendor-dts-source"
+name = "CreitinGameplays/motorola-moto-e32-kernel"
+branch = "7.1"
+files = [
+  "arch/arm64/boot/dts/sprd/ums9230-4h10.dts",
+  "arch/arm64/boot/dts/sprd/ums9230.dtsi",
+  "arch/arm64/boot/dts/sprd/sc2730.dtsi"
+]
+used_for = ["cpu", "memory", "display", "input", "gpu", "network", "audio", "power"]
+
+[[vendor_sources]]
+id = "vendor-live-dt"
+name = "proc_device_tree_root (live device capture)"
+method = "adb root + /proc/device-tree dump"
+files = [
+  "dts/proc_device_tree_root/",
+  "dts/fdt_from_device_valid.dtb"
+]
+used_for = ["display", "input", "gpu", "network", "audio", "power"]
+
+[[vendor_sources]]
+id = "vendor-ref-dts"
+name = "dts/vendor_ref/"
+files = [
+  "moto_ums9230.dts",
+  "moto_ums9230.dtsi",
+  "moto_sc2730.dtsi",
+  "moto_m170-overlay.dts",
+  "cg_ums9230.dts",
+  "cg_ums9230.dtsi"
+]
+used_for = ["display", "input", "power", "audio"]
+
+[[vendor_sources]]
+id = "vendor-patches"
+name = "CreitinGameplays/motorola-moto-e32-root"
+path = "patches/kernel-sprd/branch-hawaii-diag/"
+patches = ["0014", "0015", "0016", "0017"]
+used_for = ["gpu"]
+description = "Mali kbase r28p0-01eac0 DDK + qogirl6 platform glue"
+
+[[vendor_sources]]
+id = "unixnu-sibling"
+name = "woshimaniubi8/unixnu-eebbk-a2_x2-ums512"
+used_for = ["storage", "display"]
+description = "UMS512/T610 same family - SDHCI driver + BootShim reference"
+
+[[vendor_sources]]
+id = "unixnu-sibling-itel"
+name = "fahrulseptiana/s681ln-mainline"
+used_for = ["power", "display"]
+description = "UMS9230/T616 same family - itel S681LN board port"
+
+[[vendor_sources]]
+id = "codeberg-ums9230"
+name = "codeberg.org/ums9230-mainline/linux"
+branch = "ums9230"
+used_for = ["cpu", "memory", "power", "display"]
+description = "Mainline UMS9230/T606 SoC support"
