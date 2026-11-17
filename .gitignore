@@ -21,3 +21,8 @@ local.toml
 .local/
 dts/test*.dts
 dts/proc_device_tree_root/
+package/*_efi_main.o
+package/*_efi_main_src.c
+package/*_stub.c
+package/stub.c
+package/efi_main_*.c
