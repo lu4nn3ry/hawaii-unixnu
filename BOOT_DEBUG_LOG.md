@@ -48,7 +48,18 @@ cboot (U-Boot) → boot_a (boot.img)
 - **Problema**: `HawaiiPutc()` em `PlatformInitialize()` acessava UART1 (0x200B0000) sem clock/power init
 - **Resultado**: external abort → travamento no SEC C code
 - **Fix**: removido `HawaiiPutc()` de `PlatformInitialize()`, desabilitado `UartPutc()` em `SerialPortWrite()` com `#if !UART_DISABLED`
-- **Resultado**: **UEFI RODANDO!** Texto aparece na tela ("Failed to configure SELinux")
+- **Resultado**: **UEFI RODANDO!** Texto aparece na tela
+
+### 10. HawaiiPayloadDxe adicionado (ramdisk block device)
+- **Driver**: lê FDT em 0x82000000, encontra `/chosen/linux,initrd-start/-end`
+- **Publica**: payload FAT como read-only block device (512-byte blocks)
+- **Resultado atual**: BDS mostra "Updating MemoryMapp... RegionStart: 0x011000..."
+  e "Failed to Configuration ~MMUL?~ SElinux - Invalid ..."
+- **Análise**: O BDS está rodando, processando configurações de memória.
+  "Failed to Configuration SElinux" = SecurityStubDxe não consegue configurar SELinux (esperado sem Secure Boot).
+  O "Invalid" pode ser do BDS não encontrando boot option válido (payload FAT não montado ainda).
+- **Próximo passo**: verificar se HawaiiPayloadDxe encontrou o initrd e publicou o block device.
+  Se não, o BDS não encontra o UniXNU.efi e mostra "Invalid Boot Option".
 
 ### 8. BootShim com VFP enable (CPACR_EL1.FPEN)
 - **BootShim**: adiciona `mrs x7, CPACR_EL1; orr x7, x7, #(3<<20); msr CPACR_EL1, x7; isb`
