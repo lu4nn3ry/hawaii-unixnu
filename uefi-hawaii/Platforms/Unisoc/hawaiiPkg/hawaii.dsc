@@ -71,9 +71,9 @@
   # Panel: 1600x720 (vendor DTS lcd_size=1600x720).
   # 32 bpp XRGB8888 assumed; framebuffer at 0x9e000000 (logobuffer).
   #
-  gSiliciumPkgTokenSpaceGuid.PcdFrameBufferWidth|1600
-  gSiliciumPkgTokenSpaceGuid.PcdFrameBufferHeight|720
-  gSiliciumPkgTokenSpaceGuid.PcdFrameBufferColorDepth|16
+  gSiliciumPkgTokenSpaceGuid.PcdFrameBufferWidth|720
+  gSiliciumPkgTokenSpaceGuid.PcdFrameBufferHeight|1600
+  gSiliciumPkgTokenSpaceGuid.PcdFrameBufferColorDepth|32
 
 [PcdsFixedAtBuild]
   #

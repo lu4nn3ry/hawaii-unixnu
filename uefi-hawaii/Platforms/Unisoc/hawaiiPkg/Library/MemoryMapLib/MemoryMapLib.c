@@ -1,21 +1,18 @@
 /*
   Moto E32 (hawaii / UMS9230 / T606) memory map.
 
-  Addresses from /proc/iomem on the live device:
-    System RAM: 0x80000000-0x853effff (first segment ~84 MB)
-    Kernel code: 0x80080000-0x813effff
-    Framebuffer: 0x9e000000 (logobuffer, 1600x720 32bpp)
-    Ramoops: 0xfff80000 (0x40000)
-    GIC: 0x10000000
-    UART1: 0x200b0000
-    SDHCI: 0x201a0000
-    DPU: 0x31000000
-    DSI: 0x31100000
-    GPIO: 0x641b0000
-    EIC: 0x641000a0
-    PMIC SPI: 0x64200000
-    Timer: 0x64470000
-    pinctrl: 0x64710000
+  Addresses from /proc/iomem on the live device and vendor DTS.
+  All regions are non-overlapping. MemoryPeim/ValidateMemoryMap calls
+  CpuDeadLoop on overlap, so every reserved region must be separated
+  from conventional RAM by exact boundaries.
+
+  Physical RAM: 0x80000000 - 0x17fffefff (4 GiB, but ~3.5 GiB usable)
+  Vendor carve-outs (from DTS reserved-memory):
+    WCN:       0x87000000, 0x001A0000
+    AudioDSP:  0x89000000, 0x00600000
+    Audio Mem: 0x94100000, 0x00300000
+    Logobuffer: 0x9E000000, 0x00AB0000 (framebuffer)
+    Ramoops:   0xFFF80000, 0x00040000
 */
 
 #include <Library/MemoryMapLib.h>
@@ -40,21 +37,30 @@ gMemoryDescriptor[] = {
   {"FDT",                0x82000000, 0x00100000, AddMem,  MEM_RES, UNCACHEABLE,   Reserv, WRITE_BACK_XN},
   {"Initrd",             0x82100000, 0x02000000, AddMem,  MEM_RES, UNCACHED_UNBUFFERED_XN, Reserv, UNCACHED_UNBUFFERED_XN},
 
-  // Vendor reserved regions
+  // Vendor reserved regions (from DTS reserved-memory)
   {"DDRBIST",            0x80000000, 0x00001000, AddMem,  MEM_RES, UNCACHEABLE,   Reserv, UNCACHED_UNBUFFERED_XN},
   {"RebootEscrow",       0x81FF0000, 0x00010000, AddMem,  MEM_RES, UNCACHEABLE,   Reserv, UNCACHED_UNBUFFERED_XN},
+  {"WCN Reserved",       0x87000000, 0x001A0000, AddMem,  MEM_RES, UNCACHEABLE,   Reserv, UNCACHED_UNBUFFERED_XN},
   {"AudioDSP",           0x89000000, 0x00600000, AddMem,  MEM_RES, UNCACHEABLE,   Reserv, UNCACHED_UNBUFFERED_XN},
   {"Audio Mem",          0x94100000, 0x00300000, AddMem,  MEM_RES, UNCACHEABLE,   Reserv, UNCACHED_UNBUFFERED_XN},
 
-  // Free DRAM between vendor carve-outs (non-overlapping with reserved regions)
-  {"Free RAM Low",       0x85400000, 0x03C00000, AddMem,  SYS_MEM, SYS_MEM_CAP, Conv,   WRITE_BACK_XN},
+  // Free RAM regions (non-overlapping with reserved regions above)
+  // 0x85400000 to 0x87000000 = 0x1C00000 (28 MB, before WCN)
+  {"Free RAM Low A",     0x85400000, 0x01C00000, AddMem,  SYS_MEM, SYS_MEM_CAP, Conv,   WRITE_BACK_XN},
+  // 0x871A0000 to 0x89000000 = 0x1E60000 (31.4 MB, between WCN and AudioDSP)
+  {"Free RAM Low B",     0x871A0000, 0x01E60000, AddMem,  SYS_MEM, SYS_MEM_CAP, Conv,   WRITE_BACK_XN},
+  // 0x89600000 to 0x94100000 = 0xAB00000 (171 MB, between AudioDSP and Audio Mem)
   {"Free RAM Mid",       0x89600000, 0x0AB00000, AddMem,  SYS_MEM, SYS_MEM_CAP, Conv,   WRITE_BACK_XN},
-  {"Free RAM High",      0x94400000, 0x10000000, AddMem,  SYS_MEM, SYS_MEM_CAP, Conv,   WRITE_BACK_XN},
+  // 0x94400000 to 0x9E000000 = 0x9C00000 (156 MB, between Audio Mem and framebuffer)
+  {"Free RAM High A",    0x94400000, 0x09C00000, AddMem,  SYS_MEM, SYS_MEM_CAP, Conv,   WRITE_BACK_XN},
 
-  // Display framebuffer (logobuffer)
-  {"Display Reserved",   0x9E000000, 0x00500000, AddMem,  MEM_RES, SYS_MEM_CAP,   Reserv, WRITE_THROUGH_XN},
+  // Display framebuffer (logobuffer, from DTS: 0xab0000)
+  {"Display Reserved",   0x9E000000, 0x00AB0000, AddMem,  MEM_RES, SYS_MEM_CAP,   Reserv, WRITE_THROUGH_XN},
 
-  // Ramoops
+  // 0x9EAB0000 to 0xF4000000 = 0x5550000 (85.3 MB, after framebuffer)
+  {"Free RAM High B",    0x9EAB0000, 0x05550000, AddMem,  SYS_MEM, SYS_MEM_CAP, Conv,   WRITE_BACK_XN},
+
+  // Ramoops (persistent log)
   {"Ramoops",            0xFFF80000, 0x00040000, AddMem,  MEM_RES, UNCACHEABLE,   Reserv, UNCACHED_UNBUFFERED_XN},
 
   // Peripherals

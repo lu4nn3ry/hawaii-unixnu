@@ -28,13 +28,13 @@
 STATIC
 VOID
 HawaiiPaint (
-  IN UINT16  Colour
+  IN UINT32  Colour
   )
 {
-  volatile UINT16  *Pixel;
+  volatile UINT32  *Pixel;
   UINT32           Index;
 
-  Pixel = (volatile UINT16 *)(UINTN)HAWAII_FB_BASE;
+  Pixel = (volatile UINT32 *)(UINTN)HAWAII_FB_BASE;
   for (Index = 0; Index < HAWAII_FB_PIXELS; Index++) {
     Pixel[Index] = Colour;
   }
@@ -65,7 +65,7 @@ PlatformInitialize (
   STATIC CONST CHAR8  Banner[] = "hawaiiSEC: platform C code reached\r\n";
   UINTN               Index;
 
-  HawaiiPaint (0xF81F);   /* magenta */
+  HawaiiPaint (0xFFFF00FF);   /* magenta in ARGB */
   for (Index = 0; Banner[Index] != 0; Index++) {
     HawaiiPutc (Banner[Index]);
   }

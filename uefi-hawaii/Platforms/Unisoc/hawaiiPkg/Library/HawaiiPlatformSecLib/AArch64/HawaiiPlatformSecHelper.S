@@ -12,7 +12,7 @@
 
 #include <AsmMacroLib.h>
 
-// 0x9E000000 is the U-Boot logobuffer; panel is 1600x720 = 1,152,000 = 0x119400.
+// 0x9E000000 is the U-Boot logobuffer; panel is 720x1600 (portrait) = 1,152,000 pixels.
 #define HAWAII_FB_MOVZ_HI   0x9E00
 #define HAWAII_FB_PIXELS_LO 0x9400
 #define HAWAII_FB_PIXELS_HI 0x0011
@@ -23,12 +23,14 @@
 #define HAWAII_HOLD_HI      0x0319
 
 ASM_FUNC (PlatformAssemblyInitialize)
+  /* 32bpp framebuffer: 720x1600 = 1,152,000 pixels * 4 bytes = 0x465000 */
   movz  x0, #HAWAII_FB_MOVZ_HI, lsl #16
-  movz  w1, #HAWAII_RGB565_CYAN
+  movz  w1, #0xFFFF                  /* cyan in RGB565, replicated to 32bpp */
+  movk  w1, #0x07FF, lsl #16         /* 0x07FFFFFF = cyan in ARGB */
   movz  w2, #HAWAII_FB_PIXELS_LO
   movk  w2, #HAWAII_FB_PIXELS_HI, lsl #16
 1:
-  strh  w1, [x0], #2
+  str     w1, [x0], #4
   subs  x2, x2, #1
   b.ne  1b
 

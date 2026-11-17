@@ -32,18 +32,18 @@ STATIC UINT32   mConsolePos;
 STATIC BOOLEAN  mConsoleWrapped;
 STATIC BOOLEAN  mUartDead;
 
-/* Framebuffer: 1600x720, RGB565 (16bpp) at 0x9e000000. */
+/* Framebuffer: 720x1600, 32bpp ARGB at 0x9e000000. */
 #define FB_BASE     0x9e000000ULL
-#define FB_WIDTH    1600U
-#define FB_HEIGHT   720U
-#define FB_BPP      2U
+#define FB_WIDTH    720U
+#define FB_HEIGHT   1600U
+#define FB_BPP      4U
 #define FB_STRIDE   (FB_WIDTH * FB_BPP)
 #define FB_COLS     (FB_WIDTH / 8U)
 #define FB_ROWS     (FB_HEIGHT / 16U)
 #define FB_CELL_W   8U
 #define FB_CELL_H   16U
-#define FB_BG       0x0000U
-#define FB_FG       0xFFFFU
+#define FB_BG       0xFF000000U
+#define FB_FG       0xFFFFFFFFU
 
 STATIC UINT32   mFbRow;
 STATIC UINT32   mFbCol;
@@ -55,13 +55,13 @@ FbFillSpan (
   IN UINT32  X,
   IN UINT32  Y,
   IN UINT32  Width,
-  IN UINT16  Color
+  IN UINT32  Color
   )
 {
-  volatile UINT16  *Pixel;
+  volatile UINT32  *Pixel;
   UINT32           Index;
 
-  Pixel = (volatile UINT16 *)(UINTN)(FB_BASE + (UINT64)Y * FB_STRIDE + (UINT64)X * FB_BPP);
+  Pixel = (volatile UINT32 *)(UINTN)(FB_BASE + (UINT64)Y * FB_STRIDE + (UINT64)X * FB_BPP);
 
   for (Index = 0; Index < Width; Index++) {
     Pixel[Index] = Color;
@@ -87,14 +87,14 @@ FbScroll (
   VOID
   )
 {
-  volatile UINT16  *Dst;
-  volatile UINT16  *Src;
+  volatile UINT32  *Dst;
+  volatile UINT32  *Src;
   UINT32           Row;
   UINT32           Index;
 
   for (Row = FB_CELL_H; Row < FB_HEIGHT; Row++) {
-    Dst = (volatile UINT16 *)(UINTN)(FB_BASE + (UINT64)(Row - FB_CELL_H) * FB_STRIDE);
-    Src = (volatile UINT16 *)(UINTN)(FB_BASE + (UINT64)Row * FB_STRIDE);
+    Dst = (volatile UINT32 *)(UINTN)(FB_BASE + (UINT64)(Row - FB_CELL_H) * FB_STRIDE);
+    Src = (volatile UINT32 *)(UINTN)(FB_BASE + (UINT64)Row * FB_STRIDE);
     for (Index = 0; Index < FB_WIDTH; Index++) {
       Dst[Index] = Src[Index];
     }
@@ -111,11 +111,11 @@ FbGlyph (
   IN UINT32  Col,
   IN UINT32  Row,
   IN UINT8   Ch,
-  IN UINT16  Fg
+  IN UINT32  Fg
   )
 {
   CONST UINT8     *Bits;
-  volatile UINT16 *Line;
+  volatile UINT32 *Line;
   UINT32          X;
   UINT32          Y;
 
@@ -129,7 +129,7 @@ FbGlyph (
 
   Bits = &font8x16[(Ch - FONT_FIRST) * 16];
 
-  Line = (volatile UINT16 *)(UINTN)(FB_BASE +
+  Line = (volatile UINT32 *)(UINTN)(FB_BASE +
                                     (UINT64)(Row * FB_CELL_H) * FB_STRIDE +
                                     (UINT64)(Col * FB_CELL_W) * FB_BPP);
   for (Y = 0; Y < FB_CELL_H; Y++) {
@@ -141,7 +141,7 @@ FbGlyph (
       }
     }
 
-    Line = (volatile UINT16 *)(UINTN)((UINTN)Line + FB_STRIDE);
+    Line = (volatile UINT32 *)(UINTN)((UINTN)Line + FB_STRIDE);
   }
 }
 
