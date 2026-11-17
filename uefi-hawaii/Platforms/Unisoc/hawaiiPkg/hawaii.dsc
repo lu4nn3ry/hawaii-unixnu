@@ -108,6 +108,12 @@
 
 [Components]
   #
+  # Payload volume: reads /chosen linux,initrd-start/-end from the FDT and
+  # publishes the ramdisk as a read-only block device (512-byte blocks).
+  #
+  hawaiiPkg/Drivers/HawaiiPayloadDxe/HawaiiPayloadDxe.inf
+
+  #
   # Bring-up probe: resets to Android at EndOfDxe so every test ends with
   # a readable ramoops log instead of a black screen.
   #
