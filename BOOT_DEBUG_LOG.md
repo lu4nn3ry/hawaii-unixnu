@@ -44,6 +44,17 @@ cboot (U-Boot) → boot_a (boot.img)
 
 ## Tentativas e resultados
 
+### 9. UART removido do SEC (BLOQUEADOR RESOLVIDO)
+- **Problema**: `HawaiiPutc()` em `PlatformInitialize()` acessava UART1 (0x200B0000) sem clock/power init
+- **Resultado**: external abort → travamento no SEC C code
+- **Fix**: removido `HawaiiPutc()` de `PlatformInitialize()`, desabilitado `UartPutc()` em `SerialPortWrite()` com `#if !UART_DISABLED`
+- **Resultado**: **UEFI RODANDO!** Texto aparece na tela ("Failed to configure SELinux")
+
+### 8. BootShim com VFP enable (CPACR_EL1.FPEN)
+- **BootShim**: adiciona `mrs x7, CPACR_EL1; orr x7, x7, #(3<<20); msr CPACR_EL1, x7; isb`
+- **Objetivo**: pré-habilitar VFP para evitar crash em ArmEnableVFP
+- **Resultado**: magenta apareceu → VFP era o problema ✅
+
 ### 1. BootShim original (com mov x4, x1 extra)
 - **Problema**: 3 instruções em _Head desalinhavam o header ARM64
 - **Resultado**: bootloop (UDF #0 em 0x00)

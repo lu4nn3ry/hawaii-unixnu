@@ -19,6 +19,7 @@
 #define UART_LSR             0x08
 #define UART_LSR_TX_OVER     (1U << 15)
 #define UART_PROBE_TIMEOUT   20000U
+#define UART_DISABLED        1
 
 #define PRZ_SIG              0x43474244U
 #define PRZ_HDR              12U
@@ -30,7 +31,9 @@
 
 STATIC UINT32   mConsolePos;
 STATIC BOOLEAN  mConsoleWrapped;
+#if !UART_DISABLED
 STATIC BOOLEAN  mUartDead;
+#endif
 
 /* Framebuffer: 720x1600, 32bpp ARGB at 0x9e000000. */
 #define FB_BASE     0x9e000000ULL
@@ -201,6 +204,7 @@ FbConWrite (
   }
 }
 
+#if !UART_DISABLED
 STATIC
 VOID
 UartPutc (
@@ -224,6 +228,7 @@ UartPutc (
     }
   }
 }
+#endif
 
 STATIC
 VOID
@@ -306,7 +311,7 @@ SerialPortWrite (
   }
 
   for (Index = 0; Index < NumberOfBytes; Index++) {
-    UartPutc ((CHAR8)Buffer[Index]);
+    /* UartPutc disabled - UART1 not clocked at SEC stage, causes external abort */
     ConsolePutc ((CHAR8)Buffer[Index]);
   }
 

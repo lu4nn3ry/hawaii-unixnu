@@ -18,12 +18,7 @@
 #include <Library/PlatformSecLib.h>
 
 #define HAWAII_FB_BASE      0x9E000000U
-#define HAWAII_FB_PIXELS    (1600U * 720U)
-
-#define HAWAII_UART1_BASE   0x200B0000U
-#define HAWAII_UART_TXD     0x00U
-#define HAWAII_UART_LSR     0x08U
-#define HAWAII_UART_LSR_TX_OVER  (1U << 15)
+#define HAWAII_FB_PIXELS    (720U * 1600U)
 
 STATIC
 VOID
@@ -40,36 +35,14 @@ HawaiiPaint (
   }
 }
 
-STATIC
-VOID
-HawaiiPutc (
-  IN CHAR8  Char
-  )
-{
-  volatile UINT32  *Uart;
-  UINT32           Timeout;
-
-  Uart    = (volatile UINT32 *)(UINTN)HAWAII_UART1_BASE;
-  Timeout = 256000;
-  while ((Timeout-- != 0) && ((Uart[HAWAII_UART_LSR / 4] & HAWAII_UART_LSR_TX_OVER) == 0)) {
-  }
-
-  *(volatile UINT8 *)(UINTN)(HAWAII_UART1_BASE + HAWAII_UART_TXD) = (UINT8)Char;
-}
-
 VOID
 PlatformInitialize (
   VOID
   )
 {
-  STATIC CONST CHAR8  Banner[] = "hawaiiSEC: platform C code reached\r\n";
-  UINTN               Index;
-
+  /* Paint magenta to confirm SEC C code reached.
+   * No UART access here - UART1 is not clocked/powered at SEC stage.
+   * Any MMIO to 0x200B0000 causes external abort -> CpuDeadLoop.
+   * SerialPortWrite will write to framebuffer + ramoops only (no UART). */
   HawaiiPaint (0xFFFF00FF);   /* magenta in ARGB */
-  for (Index = 0; Banner[Index] != 0; Index++) {
-    HawaiiPutc (Banner[Index]);
-  }
-
-  /* No hold, no PSCI reset - let SecMain continue to DXE.
-   * HawaiiBringupDxe will reset at EndOfDxe. */
 }
