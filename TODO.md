@@ -39,7 +39,7 @@ Tracked in porting.toml; this file is a human-readable summary.
 | Area | Next action |
 |------|-------------|
 | Firmware UEFI | FD_BASE=0x80800000, FD_SIZE=0x400000 verified from vendor uboot_a.bin; board.toml updated; EDK2 build pending (core checkout not available in this env) |
-| Packaging | Parse hawaii boot_b header and fill exact offsets in board.toml [bootimg] |
+| Packaging (drivers .efi) | **Done** — 6 EFI binaries built: SdhciBlock.efi, WcnWifi.efi, Audio.efi, Power.efi, GoodixTouch.efi, MaliG57.efi (PE/COFF aarch64, ~4.6KB each). Next: build boot.img with kernel + DTB. |
 | Diagnostics | scripts/ramoops-collect.py created — collects /sys/fs/pstore files and UART1 console output (115200n8). Ready for first flash attempt. |
 
 ## Not Started

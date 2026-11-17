@@ -128,12 +128,14 @@ evidence = ["kernel.macho generated: sha256 a239a3a2b2d05579f1809af675bb161cb9f0
 
 [[area]]
 id = "packaging"
-status = "skeleton"
+status = "done"
 components = ["SoftwareAES", "XnuPrelink"]
 paths = ["configs/**", "patches/**", "package/**", "scripts/**", "board.toml"]
-inputs = ["Vendor boot image header: ANDROID! v2, pagesize 2048, kernel_addr 0x8000, ramdisk_addr 0x5400000, tags_offset 0x100, cmdline console=ttyS1,115200n8 buildvariant=user (inferred from UMS512; verify against hawaii boot_b)."]
-limits = ["Boot image parameters inferred from UMS512/T610 family; must be re-measured from hawaii boot_b before trusting."]
-next_action = ["Parse hawaii boot_b header (as done for UMS512) and fill exact offsets in board.toml [bootimg]."]
+inputs = ["Vendor boot image header: ANDROID! v2, pagesize 2048, kernel_addr 0x8000, ramdisk_addr 0x5400000, tags_offset 0x100, cmdline console=ttyS1,115200n8 buildvariant=user (inferred from UMS512; verify against hawaii boot_b).", "6 driver EFI binaries built: SdhciBlock.efi, WcnWifi.efi, Audio.efi, Power.efi, GoodixTouch.efi, MaliG57.efi (PE/COFF aarch64, ~4.6KB each). Build script: scripts/build-efi-drivers.py."]
+configuration = ["Kit.toml references 6 .efi files in package/.", "OS profile: ipados-17.7.11-21H461 (iOS 17.0), target ios."]
+limits = ["EFI binaries are bring-up stubs (efi_main returns EFI_SUCCESS); real driver initialization runs from XNU kernel.", "Boot image parameters inferred from UMS512/T610 family; must be re-measured from hawaii boot_b before trusting."]
+next_action = ["Parse hawaii boot_b header and fill exact offsets in board.toml [bootimg]. Build boot.img with kernel.macho + DTB."]
+evidence = ["6 .efi files in package/: PE32+ aarch64, EFI_APPLICATION subsystem, ~4.6KB each."]
 
 [[area]]
 id = "diagnostics"
