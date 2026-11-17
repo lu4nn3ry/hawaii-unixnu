@@ -30,3 +30,4 @@ package/efi_main_*.c
 # AVB private key - never commit
 artifacts/kernel-build/*.pem
 fix_toolchain.py
+fix_porting.py

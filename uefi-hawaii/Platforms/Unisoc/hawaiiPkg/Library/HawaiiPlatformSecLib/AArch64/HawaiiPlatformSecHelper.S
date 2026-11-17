@@ -32,13 +32,4 @@ ASM_FUNC (PlatformAssemblyInitialize)
   subs  x2, x2, #1
   b.ne  1b
 
-  // Busy wait two seconds so a human can see the colour.
-  movz  w4, #HAWAII_HOLD_LO
-  movk  w4, #HAWAII_HOLD_HI, lsl #16
-  mrs   x3, cntvct_el0
-  add   x4, x3, x4
-2:
-  mrs   x3, cntvct_el0
-  cmp   x3, x4
-  b.lo  2b
   ret

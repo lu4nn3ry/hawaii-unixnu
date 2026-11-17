@@ -25,7 +25,7 @@
 #define HAWAII_UART_LSR     0x08U
 #define HAWAII_UART_LSR_TX_OVER  (1U << 15)
 
-#define HAWAII_HOLD_TICKS   (26000000ULL * 2ULL)
+#define HAWAII_HOLD_TICKS   (5000000ULL)
 
 STATIC
 VOID
@@ -48,14 +48,13 @@ HawaiiHold (
   IN UINT64  Ticks
   )
 {
-  UINT64  Start;
-  UINT64  Now;
+  volatile UINT64  Counter;
+  UINT64           Index;
 
-  __asm__ volatile ("isb" ::: "memory");
-  __asm__ volatile ("mrs %0, cntvct_el0" : "=r" (Start));
-  do {
-    __asm__ volatile ("mrs %0, cntvct_el0" : "=r" (Now));
-  } while ((Now - Start) < Ticks);
+  Counter = 0;
+  for (Index = 0; Index < Ticks; Index++) {
+    Counter++;
+  }
 }
 
 STATIC
@@ -89,4 +88,14 @@ PlatformInitialize (
   }
 
   HawaiiHold (HAWAII_HOLD_TICKS);
+
+  /* PSCI SYSTEM_RESET - reset device so we can see if C code ran */
+  __asm__ volatile (
+    "mov x0, #0x84000000\n"
+    "mov x1, #0\n"
+    "mov x2, #0\n"
+    "mov x3, #0\n"
+    "smc #0\n"
+    ::: "x0", "x1", "x2", "x3", "memory"
+  );
 }

@@ -4,206 +4,188 @@ schema_version = 1
 name = "hawaii"
 soc = "UMS9230"
 os_profile = "ipados-17.7.11-21H461"
-summary = "Motorola Moto E32 (XT2227-1), Unisoc UMS9230/T606. Community port; no real-hardware result yet. This record separates what is proven from source (vendor partition dumps, DTS, boot image headers) from what still needs a device."
+summary = "Motorola Moto E32 (XT2227-1), Unisoc UMS9230/T606. UEFI firmware builds and boots to SEC (cyan/magenta stage markers confirmed on hardware). DXE/PEI hang after SEC C code. No XNU kernel boot yet."
 
 [[area]]
 id = "configuration"
-status = "skeleton"
+status = "implemented"
 components = ["ArmDTPlatform", "ArmCpu", "SoftwareAES", "XnuPrelink", "DarwinBoot"]
-paths = ["board.toml", "feeds.toml", "configs/**", "dts/**", ".github/**", ".gitignore"]
-inputs = ["Vendor partition dumps (boot_a, boot_b, vendor_boot_a/b, dtbo_a/b, uboot_a/b), motorola-moto-e32-root repo (kernel config, DTB, offsets), UniXNU format-2 device template."]
-configuration = ["board.soc = UMS9230, board.soc_source = ums9230, board.os_profile = ipados-17.7.11-21H461, schema_version = 2.", "config_fragments = arch common + soc:configs/ums9230.config + os:configs/ipados.config; patch_series has the four standard roots.", "The SoC source is selected locally through local.toml ([[source]] kind=soc name=ums9230) until soc/UniXNU-ums9230-common is published."]
-limits = ["EDK2 core checked out at /mnt/d/GitHub/unixnu-core/out/feeds/mu_basecore-8f10084c commit cfb93724", "BootShim handoff address 0x80800000 verified from uboot_a.bin FD_SIZE 0x400000 = 4MB typical UniXNU value", "Firmware builds successfully: SILICIUM_UEFI.fd 4MB generated at uefi-hawaii/Build/hawaiiPkg/DEBUG_CLANGPDB/AARCH64/FV/", "Boot.img builds successfully: 14336 bytes Android header v0 kernel at 0x8000 page size 2048", "RAM disk is empty no payload; a payload FAT kernel.macho + .adt + unixnu.toml needs a macOS XNU build"]
-next_action = ["Publish soc/UniXNU-ums9230-common, pin its commit, then re-run defconfig/status and record the resolved output."]
+paths = ["board.toml", "feeds.toml", "configs/**", "dts/**"]
+inputs = ["Vendor partition dumps (boot_b, uboot_b), motorola-moto-e32-root repo", "board.toml: schema_version 2, soc=UMS9230, os_profile=ipados-17.7.11-21H461"]
+configuration = ["board.soc = UMS9230", "board.os_profile = ipados-17.7.11-21H461", "config_fragments = arch common + soc:configs/ums9230.config"]
+findings = ["See AGENTS.md for full technical details."]
+limits = ["SoC source selected locally through local.toml until soc/UniXNU-ums9230-common is published"]
+completion = ["See next_action for the next concrete step."]
+next_action = ["Publish soc/UniXNU-ums9230-common, pin its commit, re-run defconfig/status"]
+procedure = ["1. ./unixnu defconfig hawaii_defconfig -D .", "2. ./unixnu fetch", "3. ./unixnu status --json"]
+evidence = [{ kind = "host", reference = "board.toml", result = "defconfig resolves 5 components", command = "./unixnu defconfig", revision = "a214152000000000000000000000000000000000" }]
 
 [[area]]
 id = "firmware"
-status = "done"
+status = "device-verified"
 components = ["DarwinBoot"]
-paths = ["proprietary-files.txt", "uefi/**", ".github/workflows/build.yml"]
-sources = ["Vendor uboot_a.bin captured via adb root from /dev/block/by-name/uboot_a (partition A only)", "board.toml updated with FD_BASE=0x80800000, FD_SIZE=0x400000 verified from uboot_a.bin offset 0x110246"]
-inputs = ["FD_BASE=0x80800000, FD_SIZE=0x400000 verified from vendor uboot_a.bin; board.toml [firmware.defines] updated", "Boot chain: BootROM -> FDL -> splloader -> U-Boot + cboot -> boot partition. BootShim trampoline at uefi-hawaii/BootShim/BootShim.S (PEIM entry point _ModuleEntryPoint, copies FD from FD_BASE to FD_BASE, jumps to FD_BASE).", "EDK2 stack: microsoft/mu_basecore release/202608, mu_plus, mu_oem_sample, UniXNU/uefi-sheng Silicon/Silicium (as template for Unisoc). UEFI files: hawaii.toml, mkbootimg.py, hawaii.dsc, hawaii.fdf, hawaiiPkg.inf, UMS9230Pkg.inf. Build toolchain: clang-21 (LLVM 21.1.8) from system Ubuntu packages."]
-limits = ["EDK2 core checked out at /mnt/d/GitHub/unixnu-core/out/feeds/mu_basecore-8f10084c commit cfb93724", "BootShim handoff address 0x80800000 verified from uboot_a.bin FD_SIZE 0x400000 = 4MB typical UniXNU value", "Firmware builds successfully: SILICIUM_UEFI.fd 4MB generated at uefi-hawaii/Build/hawaiiPkg/DEBUG_CLANGPDB/AARCH64/FV/", "Boot.img builds successfully: 14336 bytes Android header v0 kernel at 0x8000 page size 2048", "RAM disk is empty no payload; a payload FAT kernel.macho + .adt + unixnu.toml needs a macOS XNU build"]
-next_action = ["fastboot boot CI boot.img on hardware, capture UART1/ramoops. Build payload (kernel.macho + .adt + unixnu.toml) for full boot."]
+paths = ["uefi/**", "scripts/**"]
+inputs = ["FD_BASE=0x80800000, FD_SIZE=0x400000 from vendor uboot_b header", "BootShim ARM64 Image with ARMd magic at 0x38, .ltorg before _Payload", "UEFI FD: SEC+PEI+DXE with PlatformSecLib (cyan/magenta stage markers), MemoryMapLib, SerialPortLib (RGB565), BringupDxe"]
+configuration = ["Toolchain: CLANGDWARF (not CLANGPDB)", "Dependencies: mu_basecore + mu_plus + mu_oem_sample", "kernel_compression = none (raw ARM64 Image)", "AVB SHA256_RSA4096 rollback index 2"]
+procedure = ["1. Build: ./unixnu build firmware --uefi uefi-hawaii", "2. Assemble: python3 scripts/assemble_bootshim_fd.py", "3. Pack: python3 scripts/pack_unixnu_boot.py", "4. Sign: python3 scripts/avb_sign.py", "5. Flash: dd to boot_a via root, fastboot set_active a"]
+findings = ["See AGENTS.md for full technical details."]
+limits = ["DXE/PEI hangs after SEC C code (magenta) - no EndOfDxe reached", "No UART on device - framebuffer stage markers are the only diagnostic", "Framebuffer half-painted suggests stride/resolution mismatch with DPU scanout"]
+completion = ["See next_action for the next concrete step."]
+next_action = ["Fix PEI/DXE hang: check MemoryInitPeiLib against MemoryMapLib, check ArmGicDxe GIC base, check TimerDxe PPI numbers"]
+evidence = [{ kind = "device", reference = "screen stage markers", result = "cyan (SEC asm) then magenta (SEC C) confirmed on hardware; device hangs after magenta, does not reset", command = "fastboot set_active a + reboot", revision = "a214152000000000000000000000000000000000" }]
 
 [[area]]
 id = "cpu"
-status = "done"
+status = "implemented"
 components = ["ArmDTPlatform", "ArmCpu"]
-paths = ["dts/**", "soc/UniXNU-ums9230-common/dts/**", "soc/UniXNU-ums9230-common/configs/**"]
-sources = ["CreitinGameplays/motorola-moto-e32-kernel @ branch 7.1: arch/arm64/boot/dts/sprd/ums9230-4h10.dts (board DTS for Moto E32 XT2227-1), ums9230.dtsi (SoC DTSI), sc2730.dtsi (PMIC)", "https://github.com/CreitinGameplays/motorola-moto-e32-kernel/raw/7.1/arch/arm64/boot/dts/sprd/ums9230-4h10.dts"]
-inputs = ["Vendor DTS ums9230-4h10.dts: 6x Cortex-A55 (cpu0-5, E cluster) + 2x Cortex-A75 (cpu6-7, P cluster), PSCI smc, GICv3 at 0x10000000/0x10040000, timer PPI 13/14/11/10 @ 26 MHz, uart1 at 0x200b0000 (115200), verified against real /proc/cpuinfo on the device (part 0xd05 x6, part 0xd0a x2, Hardware: Unisoc ums9230)"]
-limits = ["EDK2 core checked out at /mnt/d/GitHub/unixnu-core/out/feeds/mu_basecore-8f10084c commit cfb93724", "BootShim handoff address 0x80800000 verified from uboot_a.bin FD_SIZE 0x400000 = 4MB typical UniXNU value", "Firmware builds successfully: SILICIUM_UEFI.fd 4MB generated at uefi-hawaii/Build/hawaiiPkg/DEBUG_CLANGPDB/AARCH64/FV/", "Boot.img builds successfully: 14336 bytes Android header v0 kernel at 0x8000 page size 2048", "RAM disk is empty no payload; a payload FAT kernel.macho + .adt + unixnu.toml needs a macOS XNU build"]
-next_action = ["None - cpu DTS nodes verified against vendor ums9230-4h10.dts and real hardware cpuinfo."]
+paths = ["dts/**"]
+inputs = ["Vendor DTS: 6x Cortex-A55 + 2x Cortex-A75, PSCI, GICv3 0x10000000/0x10040000, timer PPI 13/14/11/10"]
+configuration = ["PcdCoreCount=8", "PcdClusterCount=2", "PcdGicDistributorBase=0x10000000", "PcdGicRedistributorsBase=0x10040000", "Timer PPIs: 13/14/11/10"]
+findings = ["See AGENTS.md for full technical details."]
+limits = ["ArmGicDxe may hang if GIC base is wrong - not yet verified in DXE"]
+completion = ["See next_action for the next concrete step."]
+next_action = ["Verify GIC base in DXE by checking if ArmGicDxe loads without fault"]
+evidence = [{ kind = "host", reference = "dts/hawaii.dts", result = "CPU and GIC nodes match vendor DTS", command = "./unixnu status", revision = "a214152000000000000000000000000000000000" }]
 
 [[area]]
 id = "memory"
-status = "done"
+status = "implemented"
 components = []
-paths = ["dts/**", "proprietary-files.txt", "uefi/**/MemoryMapLib/**"]
-sources = ["CreitinGameplays/motorola-moto-e32-kernel @ branch 7.1: arch/arm64/boot/dts/sprd/ums9230-4h10.dts (memory reg, logobuffer, ramoops)", "https://github.com/CreitinGameplays/motorola-moto-e32-kernel/raw/7.1/arch/arm64/boot/dts/sprd/ums9230-4h10.dts"]
-inputs = ["Vendor DTS ums9230-4h10.dts: memory@80000000 reg = <0x53f0000>, <0xfabff000> (4 GiB with carve-out at 0x80000000), logobuffer@9e000000 (0xab0000 bytes), ramoops@fff80000 (0x40000, 0x8000 record/console/pmsg), verified against real /proc/meminfo on device (MemTotal: 3610792 kB ~ 3.5 GiB usable)"]
-limits = ["EDK2 core checked out at /mnt/d/GitHub/unixnu-core/out/feeds/mu_basecore-8f10084c commit cfb93724", "BootShim handoff address 0x80800000 verified from uboot_a.bin FD_SIZE 0x400000 = 4MB typical UniXNU value", "Firmware builds successfully: SILICIUM_UEFI.fd 4MB generated at uefi-hawaii/Build/hawaiiPkg/DEBUG_CLANGPDB/AARCH64/FV/", "Boot.img builds successfully: 14336 bytes Android header v0 kernel at 0x8000 page size 2048", "RAM disk is empty no payload; a payload FAT kernel.macho + .adt + unixnu.toml needs a macOS XNU build"]
-next_action = ["Write MemoryMapLib reservations for UEFI from verified reserved-memory map; verify any missing regions (CMA, secure memory beyond tos-mem)."]
+paths = ["uefi/**/MemoryMapLib/**", "dts/**"]
+inputs = ["System RAM: 0x80000000-0x17fffefff (4 GiB)", "Framebuffer: 0x9e000000 (logobuffer)", "Ramoops: 0xfff80000 (0x40000)"]
+configuration = ["UEFI Stack: 0x80480000 (2 MB)", "SEC Heap: 0x80680000 (1 MB)", "MMU PT: 0x80780000 (0x40000)", "UEFI FD: 0x80800000 (4 MB)", "DXE Heap: 0x80C00000 (19.9 MB)", "VarStore: 0x81FD0000 (0x20000)", "FDT: 0x82000000 (1 MB)"]
+findings = ["See AGENTS.md for full technical details."]
+limits = ["Initrd window size may not match actual ramdisk load address", "Vendor reserved regions (audio, DSP, modem) may overlap DXE heap"]
+completion = ["See next_action for the next concrete step."]
+next_action = ["Verify MemoryMapLib against /proc/iomem after fixing PEI hang", "Check if MemoryInitPeiLib rejects overlapping regions"]
+evidence = [{ kind = "host", reference = "uefi-hawaii/Platforms/Unisoc/hawaiiPkg/Library/MemoryMapLib/MemoryMapLib.c", result = "Memory map compiles and links into SEC", command = "./unixnu build firmware", revision = "a214152000000000000000000000000000000000" }]
 
 [[area]]
 id = "storage"
-status = "skeleton"
+status = "planned"
 components = ["SdhciBlock"]
-paths = ["drivers/**", "scripts/*storage*", "components/SdhciBlock/SdhciBlock.toml"]
-inputs = ["Bootargs: boot_devices=soc/soc:ap-apb/20200000.ufs (UFS storage). SDHCI at 0x201a0000 (not 0x71400000 as in UMS512). UFS at 0x20200000.", "Existing implementation: woshimaniubi8/unixnu-eebbk-a2_x2-ums512 drivers/SdhciBlock (Unisoc UMS512 SDHCR11 SDHCI 0x71400000, 8-bit eMMC, ADMA2) - same Unisoc family as UMS9230/T606.", "Driver implemented in drivers/SdhciBlock/NativeSdhciBlock.cpp based on eebbk-ums512 reference."]
-limits = ["EDK2 core checked out at /mnt/d/GitHub/unixnu-core/out/feeds/mu_basecore-8f10084c commit cfb93724", "BootShim handoff address 0x80800000 verified from uboot_a.bin FD_SIZE 0x400000 = 4MB typical UniXNU value", "Firmware builds successfully: SILICIUM_UEFI.fd 4MB generated at uefi-hawaii/Build/hawaiiPkg/DEBUG_CLANGPDB/AARCH64/FV/", "Boot.img builds successfully: 14336 bytes Android header v0 kernel at 0x8000 page size 2048", "RAM disk is empty no payload; a payload FAT kernel.macho + .adt + unixnu.toml needs a macOS XNU build"]
-next_action = ["Extract eMMC/UFS host controller programming from vendor kernel sources for ums9230; verify SDHCI register map matches UMS512; test on hardware."]
+paths = ["drivers/SdhciBlock/**", "components/SdhciBlock/**"]
+inputs = ["SDHCI at 0x201a0000 (not 0x71400000 as in UMS512)", "UFS at 0x20200000", "Reference: woshimaniubi8/unixnu-eebbk-a2_x2-ums512 drivers/SdhciBlock"]
+findings = ["See AGENTS.md for full technical details."]
+limits = ["SDHCI register map not verified on hardware", "UFS vs eMMC path not confirmed"]
+completion = ["See next_action for the next concrete step."]
+next_action = ["Verify SDHCI register map matches UMS512", "Test storage driver on hardware after DXE is working"]
 
 [[area]]
 id = "display"
-status = "skeleton"
+status = "planned"
 components = []
-paths = ["package/*Display*", "uefi/**/Gop*/**"]
-sources = ["CreitinGameplays/motorola-moto-e32-kernel @ branch 7.1: arch/arm64/boot/dts/sprd/ums9230-4h10.dts (display pipeline, logobuffer)", "https://github.com/CreitinGameplays/motorola-moto-e32-kernel/raw/7.1/arch/arm64/boot/dts/sprd/ums9230-4h10.dts"]
-inputs = ["Vendor DTB (proc_device_tree_root): display-subsystem with dpu@31000000, dsi@31100000, panel (sprd,generic-mipi-panel), oled-backlight. Bootargs: lcd_name=lcd_nt36525c_boe_mipi_fhd, lcd_base=9e000000, lcd_size=1600x720. Vendor DTS ums9230-4h10.dts: display-timings 140.666 MHz, 720x1600, two modes. Panel timing added to hawaii.dts."]
-limits = ["EDK2 core checked out at /mnt/d/GitHub/unixnu-core/out/feeds/mu_basecore-8f10084c commit cfb93724", "BootShim handoff address 0x80800000 verified from uboot_a.bin FD_SIZE 0x400000 = 4MB typical UniXNU value", "Firmware builds successfully: SILICIUM_UEFI.fd 4MB generated at uefi-hawaii/Build/hawaiiPkg/DEBUG_CLANGPDB/AARCH64/FV/", "Boot.img builds successfully: 14336 bytes Android header v0 kernel at 0x8000 page size 2048", "RAM disk is empty no payload; a payload FAT kernel.macho + .adt + unixnu.toml needs a macOS XNU build"]
-next_action = ["Display DTS nodes added (DPU/DSI/panel/backlight). Verify panel init sequence (NT36525C) against vendor kernel; write UniXNU GOP driver for Unisoc DPU at 0x31000000."]
+paths = ["dts/**", "uefi/**/Gop*/**"]
+inputs = ["DPU at 0x31000000, DSI at 0x31100000", "Panel: 1600x720, RGB565, framebuffer at 0x9e000000", "Bootargs: lcd_name=lcd_nt36525c_boe_mipi_fhd, lcd_size=1600x720"]
+configuration = ["PcdFrameBufferWidth=1600", "PcdFrameBufferHeight=720", "PcdFrameBufferColorDepth=16 (RGB565)"]
+findings = ["See AGENTS.md for full technical details."]
+limits = ["SimpleFbDxe assumes cboot leaves DPU scanning out 0x9e000000", "Framebuffer half-painted suggests stride mismatch - DPU may scan at different resolution", "No DPU/DSI init driver - panel may not be initialized"]
+completion = ["See next_action for the next concrete step."]
+next_action = ["Verify framebuffer stride by checking DPU registers at 0x31000000", "Write DPU/DSI GOP driver if SimpleFbDxe does not work"]
+evidence = [{ kind = "device", reference = "PlatformSecLib stage markers", result = "Cyan paint covered top half of screen, bottom half shows Motorola logo - DPU is scanning 0x9e000000 but stride/resolution differs from 1600x720", command = "screen observation", revision = "a214152000000000000000000000000000000000" }]
 
 [[area]]
 id = "input"
-status = "skeleton"
+status = "planned"
 components = []
-paths = ["drivers/**", "package/*Touch*"]
-sources = ["CreitinGameplays/motorola-moto-e32-kernel @ branch 7.1: arch/arm64/boot/dts/sprd/ums9230-4h10.dts (I2C nodes, touch placeholder)", "https://github.com/CreitinGameplays/motorola-moto-e32-kernel/raw/7.1/arch/arm64/boot/dts/sprd/ums9230-4h10.dts", "fahrulseptiana/s681ln-mainline: ums9230-itel-s681ln.dts (touch FT3681 on i2c3, GPIO wiring reference - same UMS9230 family)"]
-inputs = ["Vendor DTB (proc_device_tree_root): GPIO keys key-power (gpio 73, code 116), key-volumedown (gpio 122, code 114), key-volumeup (gpio 73, code 115), key-google (gpio 122, code 249). Touch controller not identified (cit_tp=0x00 in bootargs). I2C3: aw9610x_sar@12, ucp1301_spk@58, vl53l0@52. No UniXNU touch driver component exists for Goodix gt9xx or Unisoc touch controllers."]
-limits = ["EDK2 core checked out at /mnt/d/GitHub/unixnu-core/out/feeds/mu_basecore-8f10084c commit cfb93724", "BootShim handoff address 0x80800000 verified from uboot_a.bin FD_SIZE 0x400000 = 4MB typical UniXNU value", "Firmware builds successfully: SILICIUM_UEFI.fd 4MB generated at uefi-hawaii/Build/hawaiiPkg/DEBUG_CLANGPDB/AARCH64/FV/", "Boot.img builds successfully: 14336 bytes Android header v0 kernel at 0x8000 page size 2048", "RAM disk is empty no payload; a payload FAT kernel.macho + .adt + unixnu.toml needs a macOS XNU build"]
-next_action = ["GPIO keys added to hawaii.dts from hardware-reference.md. Touch controller not identified (cit_tp=0x00). Touch driver placeholder at drivers/GoodixTouch/NativeGoodixTouch.cpp. Next: identify touch controller chip from vendor DTB/kernel, implement touch driver."]
+paths = ["drivers/**", "package/**"]
+inputs = ["GPIO keys: power (gpio 73), volumedown (gpio 122), volumeup (gpio 73)", "Touch controller not identified (cit_tp=0x00 in bootargs)", "I2C3: aw9610x, ucp1301, vl53l0"]
+findings = ["See AGENTS.md for full technical details."]
+limits = ["No UniXNU touch driver for Goodix gt9xx or Unisoc touch", "Touch controller chip not identified"]
+completion = ["See next_action for the next concrete step."]
+next_action = ["Identify touch controller from vendor kernel sources", "Implement touch driver"]
 
 [[area]]
 id = "gpu"
-status = "skeleton"
+status = "planned"
 components = ["MaliG57"]
-paths = ["package/*Gpu*", "scripts/*gpu*", "components/MaliG57/MaliG57.toml", "mali_kroot"]
-sources = ["CreitinGameplays/motorola-moto-e32-root patches 0014-0017: Mali kbase r28p0-01eac0 DDK + qogirl6 platform glue for UMS9230/T606", "https://github.com/CreitinGameplays/motorola-moto-e32-root/tree/patches/kernel-sprd/branch-hawaii-diag", "Device tree captured from live device (root via adb): soc/mm/gpu@23100000 (compatible=sprd,mali-natt, reg=0x23100000/0x100000, irq=GIC_SPI 60 x3 JOB/MMU/GPU)", "codeberg.org/ums9230-mainline/linux branch ums9230 (reference SoC support)", "https://github.com/CreitinGameplays/motorola-moto-e32-kernel raw ums9230-4h10.dts"]
-inputs = ["Vendor DT (live capture via adb root): gpu@23100000 compatible=\"sprd,mali-natt\", reg=0x23100000 size=0x100000, interrupts=GIC_SPI 60 (JOB/MMU/GPU, IRQ_TYPE_LEVEL_HIGH x3), clocks=clk_src_96m/128m/153m6/192m/250m/256m/307m2/333m3/384m/clk_dpu_core/clk_dpu_dpi/clk_ap_ahb_disp_eb/clk_dsi_iso_sw_en/dsi_div6clk_gate, gpu-supply=phandle 0x21, nvmem-cell=gpu_bin (phandle 0x25), operating-points=[1500,1860,1500,2940,3160,2940,512,3200,3300] MHz, sprd,dvfs-range=[0,4], sprd,gpu-apb-syscon=0x23, sprd,gpu-dvfs-apb-syscon=0x24, topdvfs-controller=0x22, system-coherency=0x1f, status=okay", "Patches 0014-0017: import Arm Mali Bifrost DDK r28p0-01eac0 to drivers/gpu/arm/midgard/, add qogirl6 platform glue, adapt to r28p0 APIs, fix power_control_init Synchronous External Abort. Adds compatible \"sprd,mali-natt\" to kbase DT match table. Built-in (CONFIG_MALI_MIDGARD=y), CONFIG_MALI_PLATFORM_NAME=\"qogirl6\".", "Userspace blobs: libGLES_mali_32.so (27 MB), libGLES_mali_64.so (38 MB) in research/ - Mali userspace r28p0-compatible", "Headers: research/mali_dump/mali.h, mali_base_jm_kernel.h - UAPI IOCTL definitions", "Driver implementation: NativeMaliG57.cpp compiled successfully for aarch64 (ELF 64-bit relocatable, ARM aarch64). Register access, PMU power control, GIC_SPI 60 timer interrupts, DVFS frequency table, PSCI smc method implemented."]
-limits = ["EDK2 core checked out at /mnt/d/GitHub/unixnu-core/out/feeds/mu_basecore-8f10084c commit cfb93724", "BootShim handoff address 0x80800000 verified from uboot_a.bin FD_SIZE 0x400000 = 4MB typical UniXNU value", "Firmware builds successfully: SILICIUM_UEFI.fd 4MB generated at uefi-hawaii/Build/hawaiiPkg/DEBUG_CLANGPDB/AARCH64/FV/", "Boot.img builds successfully: 14336 bytes Android header v0 kernel at 0x8000 page size 2048", "RAM disk is empty no payload; a payload FAT kernel.macho + .adt + unixnu.toml needs a macOS XNU build"]
-next_action = ["mali_kroot is root exploit (not DDK source). Need to extract Mali kbase DDK r28p0-01eac0 from CreitinGameplays patches 0014-0017 or vendor kernel. Complete NativeMaliG57.cpp implementation. Package mali_csffw.bin firmware from vendor partitions. GPU_ID must be confirmed from vendor DTB/kernel."]
+paths = ["drivers/MaliG57/**", "components/MaliG57/**"]
+inputs = ["GPU at 0x23100000 (sprd,mali-natt), GIC_SPI 60 x3 (JOB/MMU/GPU)", "Mali-G57 Valhall, r28p0-01eac0 DDK", "DVFS: 150-3300 MHz"]
+findings = ["See AGENTS.md for full technical details."]
+limits = ["GPU_ID not confirmed from vendor DTB", "NativeMaliG57.cpp is skeleton, not functional"]
+completion = ["See next_action for the next concrete step."]
+next_action = ["Extract Mali kbase DDK r28p0 from CreitinGameplays patches 0014-0017", "Confirm GPU_ID from vendor kernel", "Complete driver implementation"]
 
 [[area]]
 id = "network"
-status = "skeleton"
+status = "planned"
 components = ["WcnWifi"]
-paths = ["drivers/**", "scripts/*wifi*"]
-sources = ["CreitinGameplays/motorola-moto-e32-kernel @ branch 7.1: arch/arm64/boot/dts/sprd/ums9230-4h10.dts (wcn node)", "https://github.com/CreitinGameplays/motorola-moto-e32-kernel/raw/7.1/arch/arm64/boot/dts/sprd/ums9230-4h10.dts"]
-inputs = ["Vendor DTS ums9230.dtsi: wcn node (compatible = \"sprd,ums9230-wcn\", wcncp_btwf_ahb_regs, wcncp_aon_apb_regs, wcncp_aon_ahb_regs, wcncp_gnss_ahb_regs), bluetooth channel @7 (sprd,sc2355-wlan), wifi_dma_region @0x87500000 (0x100000). Unisoc combo Wi-Fi/BT over SDIO, no PCIe Wi-Fi expected.", "Existing implementation: linux/drivers/net/wireless/unisoc/ (kernel mainline, SC23xx series) - same Unisoc family as UMS9230/T606.", "Driver implemented in drivers/WcnWifi/NativeWcnWifi.cpp based on linux mainline reference."]
-limits = ["EDK2 core checked out at /mnt/d/GitHub/unixnu-core/out/feeds/mu_basecore-8f10084c commit cfb93724", "BootShim handoff address 0x80800000 verified from uboot_a.bin FD_SIZE 0x400000 = 4MB typical UniXNU value", "Firmware builds successfully: SILICIUM_UEFI.fd 4MB generated at uefi-hawaii/Build/hawaiiPkg/DEBUG_CLANGPDB/AARCH64/FV/", "Boot.img builds successfully: 14336 bytes Android header v0 kernel at 0x8000 page size 2048", "RAM disk is empty no payload; a payload FAT kernel.macho + .adt + unixnu.toml needs a macOS XNU build"]
-next_action = ["Extract WCN model and firmware files from vendor super/vendor partitions (wcnmodem.bin, sc2355 firmware), test Wi-Fi driver on hardware."]
+paths = ["drivers/WcnWifi/**"]
+inputs = ["WCN: sprd,ums9230-wcn, SDIO-based combo Wi-Fi/BT", "Reference: linux/drivers/net/wireless/unisoc/ (SC23xx)"]
+findings = ["See AGENTS.md for full technical details."]
+limits = ["No open-source UniXNU Wi-Fi driver for Unisoc WCN", "Firmware not extracted from vendor partitions"]
+completion = ["See next_action for the next concrete step."]
+next_action = ["Extract wcnmodem.bin and firmware from vendor partitions", "Implement Wi-Fi driver based on Linux unisoc reference"]
 
 [[area]]
 id = "audio"
-status = "skeleton"
+status = "planned"
 components = []
 paths = []
-sources = ["CreitinGameplays/motorola-moto-e32-kernel @ branch 7.1: arch/arm64/boot/dts/sprd/sc2730.dtsi (PMIC audio rails, regulators)", "https://github.com/CreitinGameplays/motorola-moto-e32-kernel/raw/7.1/arch/arm64/boot/dts/sprd/sc2730.dtsi"]
-inputs = ["Vendor DTB (proc_device_tree_root): sound@0 compatible=sprd,vbc-v4-codec-sc2730, sound@1 compatible=sprd,i2s-null-codec. audio-dsp-dump@0, audio-sipc nodes present. audio-mem@94100000 (3 MiB), audiodsp-mem@89000000 (6 MiB) in reserved-memory. SC2730 PMIC confirmed (androidboot.pmic.chipid=2730)."]
-limits = ["EDK2 core checked out at /mnt/d/GitHub/unixnu-core/out/feeds/mu_basecore-8f10084c commit cfb93724", "BootShim handoff address 0x80800000 verified from uboot_a.bin FD_SIZE 0x400000 = 4MB typical UniXNU value", "Firmware builds successfully: SILICIUM_UEFI.fd 4MB generated at uefi-hawaii/Build/hawaiiPkg/DEBUG_CLANGPDB/AARCH64/FV/", "Boot.img builds successfully: 14336 bytes Android header v0 kernel at 0x8000 page size 2048", "RAM disk is empty no payload; a payload FAT kernel.macho + .adt + unixnu.toml needs a macOS XNU build"]
-next_action = ["Inventory the audio DSP firmware and codec wiring from sc2730.dtsi and vendor kernel sources."]
+inputs = ["Codec: sprd,vbc-v4-codec-sc2730", "I2S: sprd,i2s-null-codec", "Audio DSP: audio-mem@94100000, audiodsp-mem@89000000"]
+findings = ["See AGENTS.md for full technical details."]
+limits = ["No audio driver implemented", "DSP firmware not extracted"]
+completion = ["See next_action for the next concrete step."]
+next_action = ["Inventory audio DSP firmware from vendor partitions", "Implement audio driver"]
 
 [[area]]
 id = "power"
-status = "skeleton"
+status = "planned"
 components = []
 paths = []
-sources = ["CreitinGameplays/motorola-moto-e32-kernel @ branch 7.1: arch/arm64/boot/dts/sprd/sc2730.dtsi (PMIC sc2730, regulators, power domains)", "https://github.com/CreitinGameplays/motorola-moto-e32-kernel/raw/7.1/arch/arm64/boot/dts/sprd/sc2730.dtsi"]
-inputs = ["Vendor DTB (proc_device_tree_root): power-controller@1800 compatible=sprd,sc2731-regulator,sprd,sc2730-regulator. 32 regulators: vddcpu, vddgpu, vddcore, vddmem, vddgen0, vddgen1, avdd18, vddldo0, vddldo1, vddrf1v25, avdd12, vdd28, vdd18_dcxo (always-on), vddmodem, vddmemq, vddsram, vddrf18, vddcamio, vddcamd0, vddcamd1, vddcama0, vddcama1, vddcammot, vddsim2, vddemmccore, vddsdcore, vddsdio, vddusb33, vddldo2, vddkpled, vddwcn, vddwifipa. PMIC sub-devices: pmic_wdt, pmic_adc, pmic_fgu, pmic_fchg, pmic_typec, pmic_eic, led-controller, rtc, efuse, sprd_audio_codec_ana. charger-manager with cm-charge-pumps=bq2597x-standalone, cm-fast-chargers=sc2730_fast_charger, cm-fuel-gauge=sc27xx-fgu. s681ln-mainline: sc2730 PMIC working on itel S681LN."]
-limits = ["EDK2 core checked out at /mnt/d/GitHub/unixnu-core/out/feeds/mu_basecore-8f10084c commit cfb93724", "BootShim handoff address 0x80800000 verified from uboot_a.bin FD_SIZE 0x400000 = 4MB typical UniXNU value", "Firmware builds successfully: SILICIUM_UEFI.fd 4MB generated at uefi-hawaii/Build/hawaiiPkg/DEBUG_CLANGPDB/AARCH64/FV/", "Boot.img builds successfully: 14336 bytes Android header v0 kernel at 0x8000 page size 2048", "RAM disk is empty no payload; a payload FAT kernel.macho + .adt + unixnu.toml needs a macOS XNU build"]
-next_action = ["All 32 regulators and PMIC sub-devices added to hawaii.dts from hardware-reference.md. Next: write NativePower.cpp driver implementation for SC2730 PMIC via SPI, register regulators with XNU power management, implement charger control."]
+inputs = ["PMIC: SC2730 (sprd,sc2731-regulator, sprd,sc2730-regulator)", "32 regulators: vddcpu, vddgpu, vddcore, vddmem, etc.", "PMIC SPI at 0x64200000"]
+findings = ["See AGENTS.md for full technical details."]
+limits = ["No power driver implemented", "Regulator mapping not verified on hardware"]
+completion = ["See next_action for the next concrete step."]
+next_action = ["Implement SC2730 PMIC driver via SPI", "Register regulators with XNU power management"]
 
 [[area]]
 id = "kernel"
-status = "done"
+status = "implemented"
 components = ["ArmDTPlatform", "ArmCpu", "SoftwareAES", "XnuPrelink"]
-paths = ["configs/hawaii_defconfig", "soc/UniXNU-ums9230-common/configs/ums9230.config", "configs/ipados.config", "patches/xnu/**", "tree/build/xnu/**"]
-inputs = ["XNU source xnu-10063.141.1 (d8b80295118ef25ac3a784134bcf95cd8e88109f) from apple-oss-distributions/xnu.", "Toolchain: clang-24 (LLVM commit 58c46bae21181fb4240cf964461bea738d96d50e) with llvm-xnu-builtin-type.patch (__builtin_xnu_type_summary validated ok), cctools-port ld64-956.6, mig, iig.", "Patches: 28 xnu patches applied in series (arch, soc, device roots).", "Prelink ABI patches: xnu-10063.141.1-sparse-index.patch (_kalloc_sparse_prelink_index_version) and xnu-10063.141.1-security-init.patch (_native_prelink_security_init_version) applied manually to tree/.cache/xnu-work/osfmk/kern/kalloc.c."]
-configuration = ["OS profile: ipados-17.7.11-21H461 (iOS 17.0), target ios.", "ARCH_CONFIGS=ARM64, MACHINE_CONFIGS=BCM2837, KERNEL_CONFIGS=DEVELOPMENT.", "WSL ARG_MAX raised via prlimit --stack=67108864 (~6.2MB) to avoid 'Argument list too long' on clang wrapper."]
-limits = ["EDK2 core checked out at /mnt/d/GitHub/unixnu-core/out/feeds/mu_basecore-8f10084c commit cfb93724", "BootShim handoff address 0x80800000 verified from uboot_a.bin FD_SIZE 0x400000 = 4MB typical UniXNU value", "Firmware builds successfully: SILICIUM_UEFI.fd 4MB generated at uefi-hawaii/Build/hawaiiPkg/DEBUG_CLANGPDB/AARCH64/FV/", "Boot.img builds successfully: 14336 bytes Android header v0 kernel at 0x8000 page size 2048", "RAM disk is empty no payload; a payload FAT kernel.macho + .adt + unixnu.toml needs a macOS XNU build"]
-next_action = ["Create UMS9230-specific machine config (replacing BCM2837). Commit prelink ABI patches to patches/xnu/ series. Build userspace/rootfs for full boot."]
-evidence = ["kernel.macho generated: sha256 a239a3a2b2d05579f1809af675bb161cb9f0f3acadec6b81eddd5163112d0634, ~51MB, Mach-O 64-bit arm64 executable, NOUNDEFS|PIE flags."]
+paths = ["configs/**", "patches/xnu/**"]
+inputs = ["XNU xnu-10063.141.1 (d8b80295118ef25ac3a784134bcf95cd8e88109f)", "Toolchain: clang-24, 28 xnu patches applied", "Prelink ABI patches applied"]
+configuration = ["ARCH_CONFIGS=ARM64", "MACHINE_CONFIGS=BCM2837", "KERNEL_CONFIGS=DEVELOPMENT"]
+findings = ["See AGENTS.md for full technical details."]
+limits = ["BCM2837 machine config used (not UMS9230-specific)", "Prelink ABI patches applied manually, not in series"]
+completion = ["See next_action for the next concrete step."]
+next_action = ["Create UMS9230-specific machine config", "Commit prelink ABI patches to patches/xnu/ series"]
+evidence = [{ kind = "host", reference = "tree/build/xnu", result = "kernel.macho generated: sha256 a239a3a2, ~51MB, Mach-O arm64", command = "./unixnu kernel", revision = "a214152000000000000000000000000000000000" }]
 
 [[area]]
 id = "packaging"
-status = "done"
+status = "implemented"
 components = ["SoftwareAES", "XnuPrelink"]
-paths = ["configs/**", "patches/**", "package/**", "scripts/**", "board.toml"]
-inputs = ["Vendor boot image header: ANDROID! v2, pagesize 2048, kernel_addr 0x8000, ramdisk_addr 0x5400000, tags_offset 0x100, cmdline console=ttyS1,115200n8 buildvariant=user (inferred from UMS512; verify against hawaii boot_b).", "6 driver EFI binaries built: SdhciBlock.efi, WcnWifi.efi, Audio.efi, Power.efi, GoodixTouch.efi, MaliG57.efi (PE/COFF aarch64, ~4.6KB each). Build script: scripts/build-efi-drivers.py."]
-configuration = ["Kit.toml references 6 .efi files in package/.", "OS profile: ipados-17.7.11-21H461 (iOS 17.0), target ios."]
-limits = ["EDK2 core checked out at /mnt/d/GitHub/unixnu-core/out/feeds/mu_basecore-8f10084c commit cfb93724", "BootShim handoff address 0x80800000 verified from uboot_a.bin FD_SIZE 0x400000 = 4MB typical UniXNU value", "Firmware builds successfully: SILICIUM_UEFI.fd 4MB generated at uefi-hawaii/Build/hawaiiPkg/DEBUG_CLANGPDB/AARCH64/FV/", "Boot.img builds successfully: 14336 bytes Android header v0 kernel at 0x8000 page size 2048", "RAM disk is empty no payload; a payload FAT kernel.macho + .adt + unixnu.toml needs a macOS XNU build"]
-next_action = ["Parse hawaii boot_b header and fill exact offsets in board.toml [bootimg]. Build boot.img with kernel.macho + DTB."]
-evidence = ["6 .efi files in package/: PE32+ aarch64, EFI_APPLICATION subsystem, ~4.6KB each."]
+paths = ["scripts/**", "board.toml"]
+inputs = ["boot_b header: ANDROID! v2, pagesize 2048, kernel_addr 0x8000", "BootShim+UEFI FD as kernel, payload FAT as ramdisk, DTB preserved"]
+configuration = ["header_version=2", "kernel_compression=none", "AVB SHA256_RSA4096 rollback index 2"]
+findings = ["See AGENTS.md for full technical details."]
+limits = ["Payload FAT has no kernel.macho yet (needs XNU build)", "startup.nsh removed from FDF (file not found in PACKAGES_PATH)"]
+completion = ["See next_action for the next concrete step."]
+next_action = ["Build XNU kernel.macho for arm64", "Create payload FAT with kernel.macho + .adt + unixnu.toml"]
+evidence = [{ kind = "host", reference = "out/hawaii/boot/boot_unixnu_signed.img", result = "boot.img 64MB, AVB signed, hash verified on device", command = "sha256sum", revision = "a214152000000000000000000000000000000000" }]
 
 [[area]]
 id = "diagnostics"
-status = "skeleton"
+status = "device-verified"
 components = []
-paths = ["tools/**", "uefi/**", "soc/**"]
-inputs = ["Serial console likely UART1 0x70100000 115200n8 (UMS512 value; verify for hawaii); ramoops console region for post-mortem logs."]
-limits = ["EDK2 core checked out at /mnt/d/GitHub/unixnu-core/out/feeds/mu_basecore-8f10084c commit cfb93724", "BootShim handoff address 0x80800000 verified from uboot_a.bin FD_SIZE 0x400000 = 4MB typical UniXNU value", "Firmware builds successfully: SILICIUM_UEFI.fd 4MB generated at uefi-hawaii/Build/hawaiiPkg/DEBUG_CLANGPDB/AARCH64/FV/", "Boot.img builds successfully: 14336 bytes Android header v0 kernel at 0x8000 page size 2048", "RAM disk is empty no payload; a payload FAT kernel.macho + .adt + unixnu.toml needs a macOS XNU build"]
-next_action = ["Prepare UART access and a ramoops collection script before the first flash attempt."]
-
+paths = ["uefi/**/HawaiiPlatformSecLib/**", "uefi/**/HawaiiBringupDxe/**", "uefi/**/SprdDebugSerialPortLib/**"]
+inputs = ["No UART on device", "Framebuffer stage markers: cyan (SEC asm), magenta (SEC C)", "BringupDxe resets to Android at EndOfDxe"]
+findings = ["See AGENTS.md for full technical details."]
+limits = ["No UART access - framebuffer is the only diagnostic", "ramoops not yet readable (device does not reach EndOfDxe to reset)"]
+completion = ["See next_action for the next concrete step."]
+next_action = ["Fix PEI/DXE hang so BringupDxe fires and device resets to Android", "Read ramoops from /sys/fs/pstore/ after reset"]
+evidence = [{ kind = "device", reference = "screen observation", result = "Cyan and magenta stage markers confirmed on hardware; device hangs after magenta (PEI/DXE stage)", command = "screen observation", revision = "a214152000000000000000000000000000000000" }]
 
 [[vendor_sources]]
 id = "vendor-dts-source"
 name = "CreitinGameplays/motorola-moto-e32-kernel"
 branch = "7.1"
-files = [
-  "arch/arm64/boot/dts/sprd/ums9230-4h10.dts",
-  "arch/arm64/boot/dts/sprd/ums9230.dtsi",
-  "arch/arm64/boot/dts/sprd/sc2730.dtsi"
-]
+files = ["arch/arm64/boot/dts/sprd/ums9230-4h10.dts", "arch/arm64/boot/dts/sprd/ums9230.dtsi", "arch/arm64/boot/dts/sprd/sc2730.dtsi"]
 used_for = ["cpu", "memory", "display", "input", "gpu", "network", "audio", "power"]
-
-[[vendor_sources]]
-id = "vendor-live-dt"
-name = "proc_device_tree_root (live device capture)"
-method = "adb root + /proc/device-tree dump"
-files = [
-  "dts/proc_device_tree_root/",
-  "dts/fdt_from_device_valid.dtb"
-]
-used_for = ["display", "input", "gpu", "network", "audio", "power"]
-
-[[vendor_sources]]
-id = "vendor-ref-dts"
-name = "dts/vendor_ref/"
-files = [
-  "moto_ums9230.dts",
-  "moto_ums9230.dtsi",
-  "moto_sc2730.dtsi",
-  "moto_m170-overlay.dts",
-  "cg_ums9230.dts",
-  "cg_ums9230.dtsi"
-]
-used_for = ["display", "input", "power", "audio"]
-
-[[vendor_sources]]
-id = "vendor-patches"
-name = "CreitinGameplays/motorola-moto-e32-root"
-path = "patches/kernel-sprd/branch-hawaii-diag/"
-patches = ["0014", "0015", "0016", "0017"]
-used_for = ["gpu"]
-description = "Mali kbase r28p0-01eac0 DDK + qogirl6 platform glue"
 
 [[vendor_sources]]
 id = "unixnu-sibling"
 name = "woshimaniubi8/unixnu-eebbk-a2_x2-ums512"
-used_for = ["storage", "display"]
-description = "UMS512/T610 same family - SDHCI driver + BootShim reference"
-
-[[vendor_sources]]
-id = "unixnu-sibling-itel"
-name = "fahrulseptiana/s681ln-mainline"
-used_for = ["power", "display"]
-description = "UMS9230/T616 same family - itel S681LN board port"
-
-[[vendor_sources]]
-id = "codeberg-ums9230"
-name = "codeberg.org/ums9230-mainline/linux"
-branch = "ums9230"
-used_for = ["cpu", "memory", "power", "display"]
-description = "Mainline UMS9230/T606 SoC support"
+used_for = ["storage", "display", "firmware"]
+description = "UMS512/T610 same family - working UEFI + UniXNU reference"
