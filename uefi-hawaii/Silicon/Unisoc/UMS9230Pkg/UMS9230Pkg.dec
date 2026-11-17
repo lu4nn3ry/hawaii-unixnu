@@ -1,0 +1,26 @@
+## @file
+#  Unisoc UMS9230 (T606) SoC package for UniXNU.
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  DEC_SPECIFICATION              = 0x00010005
+  PACKAGE_NAME                   = UMS9230Pkg
+  PACKAGE_UNI_FILE               = UMS9230Pkg.uni
+  PACKAGE_GUID                   = 00000001-0000-0000-0000-000000000002
+  PACKAGE_VERSION                = 0.10
+
+[Includes]
+  Include
+
+[LibraryClasses]
+  ##  @libraryclass  Serial port library for UMS9230 UART1 debug output.
+  #
+  SerialPortLib|UMS9230Pkg/Library/SprdDebugSerialPortLib/SprdDebugSerialPortLib.inf
+
+[Guids]
+  gUMS9230PkgTokenSpaceGuid       = 00000001-0000-0000-0000-000000000003
+
+[PcdsFixedAtBuild]
+  gUMS9230PkgTokenSpaceGuid.PcdBbkA2ResetAtEndOfDxe|FALSE

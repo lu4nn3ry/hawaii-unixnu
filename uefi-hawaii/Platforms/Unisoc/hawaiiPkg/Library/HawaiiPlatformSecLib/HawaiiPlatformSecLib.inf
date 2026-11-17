@@ -1,0 +1,28 @@
+## @file
+#  Hawaii platform specific SEC hooks.
+#
+#  Stage markers while SEC is brought up:
+#    Assembly hook: paints panel CYAN (0x07FF)
+#    C hook: paints panel MAGENTA (0xF81F)
+#
+#  Copyright (c) 2026. SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = HawaiiPlatformSecLib
+  FILE_GUID                      = 7C41E0A9-2B6D-4F83-9A57-3E0D1C8B45F3
+  MODULE_TYPE                    = SEC
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = PlatformSecLib
+
+[Sources]
+  HawaiiPlatformSec.c
+
+[Sources.AArch64]
+  AArch64/HawaiiPlatformSecHelper.S
+
+[Packages]
+  ArmPkg/ArmPkg.dec
+  MdePkg/MdePkg.dec
+  SiliciumPkg/SiliciumPkg.dec

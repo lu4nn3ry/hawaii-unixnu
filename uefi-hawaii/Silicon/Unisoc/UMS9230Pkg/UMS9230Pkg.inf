@@ -5,7 +5,7 @@
 
 [Defines]
   INF_NAME            =  UMS9230Pkg
-  INF_GUID            =  00000000-0000-0000-0000-000000000001
+  INF_GUID            =  00000001-0000-0000-0000-000000000001
   INF_VERSION         =  0.1
   BASE_NAME           =  UMS9230Pkg
   FILE_GUID           =  00000001-0000-0000-0000-000000000002
@@ -13,7 +13,7 @@
   MODULE_TYPE         =  BASE
   ARCHITECTURE        =  AARCH64
   CLASS               =  PEIM
-  DEPEX               =  0x00000001   # Dxe
+  DEPEX               =  0x00000001
   DEPEX_FILE_TYPE     =  SECTION_FIXED
 
 [Sources]

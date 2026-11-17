@@ -18,7 +18,7 @@ BASE_DIR = pathlib.Path("/mnt/d/GitHub/hawaii-unixnu")
 BOOTSHIM_S = BASE_DIR / "uefi-hawaii/BootShim/BootShim.S"
 BOOTSHIM_O = pathlib.Path("/tmp/bootshim.o")
 BOOTSHIM_BIN = pathlib.Path("/tmp/bootshim.bin")
-UEFI_FD = BASE_DIR / "uefi-hawaii/Build/hawaiiPkg/DEBUG_CLANGPDB/AARCH64/FV/SILICIUM_UEFI.fd"
+UEFI_FD = BASE_DIR / "uefi-hawaii/Build/hawaiiPkg/DEBUG_CLANGDWARF/FV/SILICIUM_UEFI.fd"
 OUTPUT = BASE_DIR / "payload/bootshim_fd.bin"
 
 FD_BASE = 0x80800000

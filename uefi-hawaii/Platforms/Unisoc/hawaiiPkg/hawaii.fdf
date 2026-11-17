@@ -1,34 +1,113 @@
-# hawaii.fdf - EDK2 FDF for Moto E32 (hawaii / UMS9230)
+##
+#  Flash description for Moto E32 (hawaii / UMS9230 / T606).
 #
-# Follows Mu-Silicium layout:
-#   https://unixnu.com/porting/uefi-firmware#dsc-and-fdf
+#  FD_BASE, FD_SIZE and FD_BLOCKS are supplied on the build command line:
+#    -D FD_BASE=0x80800000 -D FD_SIZE=0x400000 -D FD_BLOCKS=0x400
+#  They must match [uefi_fd] in Resources/Configs/hawaii.toml.
+#
+#  FD_BASE is 0x80800000: cboot loads the boot image to 0x80080000, BootShim
+#  sits there with the whole FD appended right behind it, so the copy
+#  destination has to clear the shim + 4 MiB source window.
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+##
 
-[Defines]
-  STACK_SIZE      = 0x40000
-  HEAP_SIZE       = 0x100000
-  FD_SIZE         = 0x400000
-  FD_BASE_ADDRESS = 0x80800000
+[FD.SILICIUM_UEFI]
+BaseAddress   = $(FD_BASE)|gArmTokenSpaceGuid.PcdFdBaseAddress
+Size          = $(FD_SIZE)|gArmTokenSpaceGuid.PcdFdSize
+ErasePolarity = 1
 
-[Fds]
-  SILICIUM_UEFI.fd
+# BlockSize * NumBlocks must equal Size
+BlockSize     = 0x1000
+NumBlocks     = $(FD_BLOCKS)
 
-[Files  SILICIUM_UEFI]
-  INF  MdeModulePkg/Universal/BdsDxe/BdsDxe.inf
-  INF  MdeModulePkg/Universal/ConsoleSplitterDxe/ConsoleSplitterDxe.inf
-  INF  MdeModulePkg/Universal/MonitorDxe/MonitorDxe.inf
-  INF  MdeModulePkg/Universal/Variable/RuntimeDxe/VariableRuntimeDxe.inf
-  INF  MdeModulePkg/Universal/DevicePathDxe/DevicePathDxe.inf
-  INF  MdeModulePkg/Universal/LoadPe32Dxe/LoadPe32Dxe.inf
-  INF  MdeModulePkg/Universal/UnicodeCollationDxe/UnicodeCollationDxe.inf
-  INF  MdeModulePkg/Universal/Disk/DiskIoDxe/DiskIoDxe.inf
-  INF  MdeModulePkg/Universal/Disk/PartitionDxe/PartitionDxe.inf
-  INF  FatPkg/EnhancedFatDxe/Fat.inf
+0x00000000|$(FD_SIZE)
+gArmTokenSpaceGuid.PcdFvBaseAddress|gArmTokenSpaceGuid.PcdFvSize
+FV = FVMAIN_COMPACT
 
-  ## Platform and SoC
-  INF  Platforms/Unisoc/hawaiiPkg/hawaiiPkg.inf
-  INF  Silicon/Unisoc/UMS9230Pkg/UMS9230Pkg.inf
+[FV.FvMain]
+FvNameGuid         = CD8D4C84-20AD-4073-8A28-3400FAE05942
+BlockSize          = 0x1000
+NumBlocks          = 0
+FvAlignment        = 8
+ERASE_POLARITY     = 1
+MEMORY_MAPPED      = TRUE
+STICKY_WRITE       = TRUE
+LOCK_CAP           = TRUE
+LOCK_STATUS        = TRUE
+WRITE_DISABLED_CAP = TRUE
+WRITE_ENABLED_CAP  = TRUE
+WRITE_STATUS       = TRUE
+WRITE_LOCK_CAP     = TRUE
+WRITE_LOCK_STATUS  = TRUE
+READ_DISABLED_CAP  = TRUE
+READ_ENABLED_CAP   = TRUE
+READ_STATUS        = TRUE
+READ_LOCK_CAP      = TRUE
+READ_LOCK_STATUS   = TRUE
 
-  FV_IMAGE_MINIMUM_ALIGNMENT = 0x1000
+  !include Include/APRIORI.inc
+  !include Include/DXE.inc
 
-[Guides]
-  gEfiCallerIdGuid
+  # RAM Manager: turns the MemoryMapLib table into HOBs and installs the
+  # memory attribute regions DXE core needs.
+  INF SiliciumPkg/Drivers/RamManagerDxe/RamManagerDxe.inf
+
+  # SMBIOS
+  INF MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
+  INF SiliciumPkg/Drivers/SmBiosTableDxe/SmBiosTableDxe.inf
+
+  # ACPI: table infrastructure only, no platform tables yet.
+  INF MdeModulePkg/Universal/Acpi/AcpiTableDxe/AcpiTableDxe.inf
+  INF MdeModulePkg/Universal/Acpi/AcpiPlatformDxe/AcpiPlatformDxe.inf
+  INF MdeModulePkg/Universal/Acpi/BootGraphicsResourceTableDxe/BootGraphicsResourceTableDxe.inf
+
+  # Device tree: consumes the merged vendor FDT that cboot passes in x0, via
+  # the gSiliciumEntryArgHobGuid HOB that SEC records.
+  INF EmbeddedPkg/Drivers/DtPlatformDxe/DtPlatformDxe.inf
+
+  # Bring-up probe: dumps memory map at EndOfDxe and resets to Android.
+  INF hawaiiPkg/Drivers/HawaiiBringupDxe/HawaiiBringupDxe.inf
+
+  # UniXNU: the boot manager itself (UniXNU.efi), its boot-option registrar
+  # (UniXNUDxe) and the ramdisk block-device driver that discovers the payload
+  # FAT volume from the initrd handoff.
+  INF UniXNUPkg/Application/UniXNU/UniXNU.inf
+  INF UniXNUPkg/Driver/UniXNUDxe/UniXNUDxe.inf
+  INF UniXNUPkg/Driver/UniXNURamDiskDxe/UniXNURamDiskDxe.inf
+
+  # DarwinBoot: the XNU loader.  It implements gUniXNULoaderProtocolGuid, which
+  # UniXNU uses for `type = "xnu"` menu entries; it needs the GOP, the payload
+  # FAT volume and the ADT sidecar produced by the payload step.
+  INF DarwinBootPkg/Driver/DarwinBoot.inf
+
+  # UEFI Shell: a UEFI_APPLICATION that BDS launches by FILE_GUID.
+  INF ShellPkg/Application/Shell/Shell.inf
+
+[FV.FVMAIN_COMPACT]
+FvAlignment        = 8
+ERASE_POLARITY     = 1
+MEMORY_MAPPED      = TRUE
+STICKY_WRITE       = TRUE
+LOCK_CAP           = TRUE
+LOCK_STATUS        = TRUE
+WRITE_DISABLED_CAP = TRUE
+WRITE_ENABLED_CAP  = TRUE
+WRITE_STATUS       = TRUE
+WRITE_LOCK_CAP     = TRUE
+WRITE_LOCK_STATUS  = TRUE
+READ_DISABLED_CAP  = TRUE
+READ_ENABLED_CAP   = TRUE
+READ_STATUS        = TRUE
+READ_LOCK_CAP      = TRUE
+READ_LOCK_STATUS   = TRUE
+
+  INF SiliciumPkg/Sec/Sec.inf
+
+  FILE FV_IMAGE = 9E21FD93-9C72-4c15-8C4B-E77F1DB2D792 {
+    SECTION GUIDED EE4E5898-3914-4259-9D6E-DC7BD79403CF PROCESSING_REQUIRED = TRUE {
+      SECTION FV_IMAGE = FVMAIN
+    }
+  }
+
+  !include SiliciumPkg/Common.fdf.inc

@@ -2,6 +2,11 @@
 #
 # Follows Mu-Silicium layout:
 #   https://unixnu.com/porting/uefi-firmware#device-configuration
+#
+# Values measured from stock boot_b header (Android v2):
+#   header_version 2, pagesize 2048, kernel_addr 0x8000,
+#   ramdisk_addr 0x5400000, tags_addr 0x100,
+#   cmdline "console=ttyS1,115200n8 buildvariant=user"
 
 [boot_shim]
 requires_kernel_header = true
@@ -11,13 +16,16 @@ base = 0x80800000
 size = 0x400000
 
 [boot_image_kernel]
-kernel_compression = "gzip"
-append_dtb = true
+# Raw BootShim + UEFI FD (no gzip). cboot expects a raw ARM64 Image.
+kernel_compression = "none"
+# DTB is in header v2 dtb_size/dtb_addr, not appended to kernel.
+append_dtb = false
 
 [boot_image]
-header_version = 0
-base = 0
+header_version = 2
+base = 0x00000000
 kernel_offset = 0x8000
 ramdisk_offset = 0x5400000
 tags_offset = 0x100
 pagesize = 2048
+cmdline = "console=ttyS1,115200n8 buildvariant=user"

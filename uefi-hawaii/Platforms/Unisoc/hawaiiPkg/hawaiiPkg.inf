@@ -1,4 +1,4 @@
-# hawaiiPkg.inf - Platform package for Moto E32 (hawaii)
+# hawaiiPkg.inf - Platform package for Moto E32 (hawaii / UMS9230)
 #
 # Follows Mu-Silicium Platforms layout:
 #   https://unixnu.com/porting/uefi-firmware#mu-silicium-layout
@@ -13,7 +13,7 @@
   MODULE_TYPE         =  BASE
   ARCHITECTURE        =  AARCH64
   CLASS               =  PEIM
-  DEPEX               =  0x00000001   # Dxe
+  DEPEX               =  0x00000001
   DEPEX_FILE_TYPE     =  SECTION_FIXED
 
 [Sources]
