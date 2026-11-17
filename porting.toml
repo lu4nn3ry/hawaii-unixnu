@@ -116,6 +116,17 @@ limits = ["PMIC model confirmed as sc2730 from vendor DTS. Charger and backlight
 next_action = ["All 32 regulators and PMIC sub-devices added to hawaii.dts from hardware-reference.md. Next: write NativePower.cpp driver implementation for SC2730 PMIC via SPI, register regulators with XNU power management, implement charger control."]
 
 [[area]]
+id = "kernel"
+status = "done"
+components = ["ArmDTPlatform", "ArmCpu", "SoftwareAES", "XnuPrelink"]
+paths = ["configs/hawaii_defconfig", "soc/UniXNU-ums9230-common/configs/ums9230.config", "configs/ipados.config", "patches/xnu/**", "tree/build/xnu/**"]
+inputs = ["XNU source xnu-10063.141.1 (d8b80295118ef25ac3a784134bcf95cd8e88109f) from apple-oss-distributions/xnu.", "Toolchain: clang-24 (LLVM commit 58c46bae21181fb4240cf964461bea738d96d50e) with llvm-xnu-builtin-type.patch (__builtin_xnu_type_summary validated ok), cctools-port ld64-956.6, mig, iig.", "Patches: 28 xnu patches applied in series (arch, soc, device roots).", "Prelink ABI patches: xnu-10063.141.1-sparse-index.patch (_kalloc_sparse_prelink_index_version) and xnu-10063.141.1-security-init.patch (_native_prelink_security_init_version) applied manually to tree/.cache/xnu-work/osfmk/kern/kalloc.c."]
+configuration = ["OS profile: ipados-17.7.11-21H461 (iOS 17.0), target ios.", "ARCH_CONFIGS=ARM64, MACHINE_CONFIGS=BCM2837, KERNEL_CONFIGS=DEVELOPMENT.", "WSL ARG_MAX raised via prlimit --stack=67108864 (~6.2MB) to avoid 'Argument list too long' on clang wrapper."]
+limits = ["Kernel built against BCM2837 machine config (generic ARM64), not UMS9230-specific. Needs device-specific machine config for production.", "Prelink ABI patches applied manually to .cache/xnu-work, not yet in patches/xnu/ series.", "Kernel links against IPSW components from iPadOS 17.7.11 (21H461) kernelcache; needs rootfs/userspace for full boot."]
+next_action = ["Create UMS9230-specific machine config (replacing BCM2837). Commit prelink ABI patches to patches/xnu/ series. Build userspace/rootfs for full boot."]
+evidence = ["kernel.macho generated: sha256 a239a3a2b2d05579f1809af675bb161cb9f0f3acadec6b81eddd5163112d0634, ~51MB, Mach-O 64-bit arm64 executable, NOUNDEFS|PIE flags."]
+
+[[area]]
 id = "packaging"
 status = "skeleton"
 components = ["SoftwareAES", "XnuPrelink"]

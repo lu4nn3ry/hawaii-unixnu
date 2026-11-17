@@ -32,6 +32,10 @@ Tracked in porting.toml; this file is a human-readable summary.
 
 ## In Progress
 
+| Area | Evidence |
+|------|----------|
+| Kernel XNU build | **kernel.macho generated: sha256 a239a3a2b2d05579f1809af675bb161cb9f0f3acadec6b81eddd5163112d0634, ~51MB, Mach-O 64-bit arm64 executable, NOUNDEFS|PIE flags.** Toolchain: clang-24 with __builtin_xnu_type_summary validated. 28 xnu patches applied. Prelink ABI patches (sparse-index + security-init) applied. |
+
 | Area | Next action |
 |------|-------------|
 | Firmware UEFI | FD_BASE=0x80800000, FD_SIZE=0x400000 verified from vendor uboot_a.bin; board.toml updated; EDK2 build pending (core checkout not available in this env) |

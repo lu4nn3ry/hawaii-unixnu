@@ -76,6 +76,7 @@ test -x /usr/bin/xcrun && echo "xcrun instalado"
 | #182 | Aberta | Linux: kernel link fails on `__llvm_profile_*` — linker não encontra funções do runtime de profiling. Solução temporária: duas funções stub. |
 | #183 | Aberta | Compile records survive OS profile switches — conflitos entre targets `arm64e-apple-ios17.0.0` vs `arm64e-apple-ios27.0`. Solução: `rm -rf out/<device>/<profile>/<config>/tree/build/xnu`. |
 | #181 | Aberta | Derive the Linux toolchain target from selected profiles — corrige `linux_env()` para selecionar arquitetura e versão do SO corretamente. Não incorporado. |
+| #184 | Aberta | Kernel prelink falha com `Native kernel lacks sparse-prelink index ABI` — o patch `kits/XnuPrelink/patches/xnu-10063.141.1-sparse-index.patch` não é aplicado automaticamente ao source do XNU. Solução: aplicar manualmente o patch em `tree/.cache/xnu-work/osfmk/kern/kalloc.c` (adiciona `__attribute__((used)) const uint32_t kalloc_sparse_prelink_index_version = 1;`) e reconstruir o kernel. |
 
 ## Avaliação para o port Hawaii
 
