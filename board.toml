@@ -97,6 +97,7 @@ dram_size = "0x80000000"
 panic_screen = true
 skip_setup_tool = "scripts/seed-data-skip-setup.py"
 timeout = 3
+tools = true
 
 kernel_args = ["-v", "serial=3", "boot-progress=1", "build-tag=hawaii-001"]
 

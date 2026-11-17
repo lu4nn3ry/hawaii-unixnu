@@ -108,16 +108,14 @@
 
 [Components]
   #
-  # Payload volume: reads /chosen linux,initrd-start/-end from the FDT and
-  # publishes the ramdisk as a read-only block device (512-byte blocks).
+  # HawaiiPayloadDxe disabled temporarily - using UniXNURamDiskDxe (official path)
   #
-  hawaiiPkg/Drivers/HawaiiPayloadDxe/HawaiiPayloadDxe.inf
+  # hawaiiPkg/Drivers/HawaiiPayloadDxe/HawaiiPayloadDxe.inf
 
   #
-  # Bring-up probe: resets to Android at EndOfDxe so every test ends with
-  # a readable ramoops log instead of a black screen.
+  # HawaiiBringupDxe disabled - let BDS reach the UniXNU menu
   #
-  hawaiiPkg/Drivers/HawaiiBringupDxe/HawaiiBringupDxe.inf
+  # hawaiiPkg/Drivers/HawaiiBringupDxe/HawaiiBringupDxe.inf
 
   #
   # FV as a read-only file system, so the Shell can auto-run startup.nsh.

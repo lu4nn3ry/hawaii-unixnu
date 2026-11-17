@@ -23,6 +23,11 @@
 #define HAWAII_HOLD_HI      0x0319
 
 ASM_FUNC (PlatformAssemblyInitialize)
+  /* Save x0 (FDT address from bootloader) to 0x80700000 (free at SEC stage).
+   * The C code (PlatformInitialize) reads it back and creates the Entry-Argument HOB. */
+  movz  x3, #0x8070, lsl #16
+  str     x0, [x3]
+
   /* 32bpp framebuffer: 720x1600 = 1,152,000 pixels * 4 bytes = 0x465000 */
   movz  x0, #HAWAII_FB_MOVZ_HI, lsl #16
   movz  w1, #0xFFFF                  /* cyan in RGB565, replicated to 32bpp */

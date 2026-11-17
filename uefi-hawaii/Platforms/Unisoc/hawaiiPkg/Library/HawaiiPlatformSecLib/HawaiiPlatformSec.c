@@ -16,6 +16,8 @@
 
 #include <Uefi.h>
 #include <Library/PlatformSecLib.h>
+#include <Library/HobLib.h>
+#include <Guid/EventGroup.h>
 
 #define HAWAII_FB_BASE      0x9E000000U
 #define HAWAII_FB_PIXELS    (720U * 1600U)
@@ -40,9 +42,23 @@ PlatformInitialize (
   VOID
   )
 {
-  /* Paint magenta to confirm SEC C code reached.
-   * No UART access here - UART1 is not clocked/powered at SEC stage.
-   * Any MMIO to 0x200B0000 causes external abort -> CpuDeadLoop.
-   * SerialPortWrite will write to framebuffer + ramoops only (no UART). */
+  UINT64  Fdt;
+  EFI_GUID  EntryArgGuid = {
+    0xDAEE82E6, 0x8090, 0x4E72,
+    { 0xBF, 0xB9, 0x78, 0xC1, 0x3C, 0xD4, 0xE3, 0x59 }
+  };
+
+  /* Paint magenta to confirm SEC C code reached. */
   HawaiiPaint (0xFFFF00FF);   /* magenta in ARGB */
+
+  /* Read FDT address saved by assembly hook at 0x80700000 */
+  Fdt = *(volatile UINT64 *)(UINTN)0x80700000;
+  if (Fdt != 0) {
+    /* Create Entry-Argument HOB so UniXNURamDiskDxe can find the FDT */
+    VOID  *Hob;
+    Hob = BuildGuidHob (&EntryArgGuid, sizeof (UINT64));
+    if (Hob != NULL) {
+      *(UINT64 *)GET_GUID_HOB_DATA (Hob) = Fdt;
+    }
+  }
 }

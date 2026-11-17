@@ -66,12 +66,11 @@ READ_LOCK_STATUS   = TRUE
   # the gSiliciumEntryArgHobGuid HOB that SEC records.
   INF EmbeddedPkg/Drivers/DtPlatformDxe/DtPlatformDxe.inf
 
-  # Payload volume: reads /chosen linux,initrd-start/-end from FDT and
-  # publishes the ramdisk FAT as a read-only block device.
-  INF hawaiiPkg/Drivers/HawaiiPayloadDxe/HawaiiPayloadDxe.inf
+  # Payload volume: HawaiiPayloadDxe disabled - using UniXNURamDiskDxe (official path)
+  # INF hawaiiPkg/Drivers/HawaiiPayloadDxe/HawaiiPayloadDxe.inf
 
-  # Bring-up probe: dumps memory map at EndOfDxe and resets to Android.
-  INF hawaiiPkg/Drivers/HawaiiBringupDxe/HawaiiBringupDxe.inf
+  # Bring-up probe: disabled - let BDS reach the UniXNU menu
+  # INF hawaiiPkg/Drivers/HawaiiBringupDxe/HawaiiBringupDxe.inf
 
   # UniXNU: the boot manager itself (UniXNU.efi), its boot-option registrar
   # (UniXNUDxe) and the ramdisk block-device driver that discovers the payload
