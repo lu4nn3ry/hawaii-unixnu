@@ -55,11 +55,23 @@ cboot (U-Boot) → boot_a (boot.img)
 - **Publica**: payload FAT como read-only block device (512-byte blocks)
 - **Resultado atual**: BDS mostra "Updating MemoryMapp... RegionStart: 0x011000..."
   e "Failed to Configuration ~MMUL?~ SElinux - Invalid ..."
-- **Análise**: O BDS está rodando, processando configurações de memória.
-  "Failed to Configuration SElinux" = SecurityStubDxe não consegue configurar SELinux (esperado sem Secure Boot).
-  O "Invalid" pode ser do BDS não encontrando boot option válido (payload FAT não montado ainda).
-- **Próximo passo**: verificar se HawaiiPayloadDxe encontrou o initrd e publicou o block device.
-  Se não, o BDS não encontra o UniXNU.efi e mostra "Invalid Boot Option".
+
+### 11. FDT handoff corrigido + BringupDxe/PayloadDxe desabilitados (especialista)
+- **Problema**: ModuleEntryPoint.S não salvava x0 (FDT address) antes de chamar
+  PlatformAssemblyInitialize, que destruía x0 com o framebuffer paint
+- **Fix**: PlatformAssemblyInitialize salva x0 em 0x80700000, PlatformInitialize
+  lê de volta e cria Entry-Argument HOB (GUID DAEE82E6-8090-4E72-BFB9-78C13CD4E359)
+- **HawaiiBringupDxe**: desabilitado (não reseta mais no EndOfDxe)
+- **HawaiiPayloadDxe**: desabilitado (usando UniXNURamDiskDxe oficial)
+- **Resultado atual**: BDS mostra "UpdateRegionMap... RegionStart: 0x011000"
+  e "Failed Configuration MM.. Selinux etc"
+- **Análise**: O BDS está processando configurações de memória (MemoryMap).
+  "Failed Configuration SElinux" = SecurityStubDxe (esperado sem Secure Boot).
+  O UniXNURamDiskDxe deveria estar lendo o Entry-Argument HOB para encontrar o FDT.
+  Se o menu UniXNU não aparece, o UniXNURamDiskDxe pode não estar encontrando o initrd
+  ou o UniXNUDxe pode não estar registrando o Boot####.
+- **Próximo passo**: adicionar debug prints no framebuffer para confirmar se
+  o Entry-Argument HOB foi criado e se o UniXNURamDiskDxe encontrou o initrd.
 
 ### 8. BootShim com VFP enable (CPACR_EL1.FPEN)
 - **BootShim**: adiciona `mrs x7, CPACR_EL1; orr x7, x7, #(3<<20); msr CPACR_EL1, x7; isb`
